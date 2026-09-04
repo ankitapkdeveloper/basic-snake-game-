@@ -1,110 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#111318" />
-  <title>Snake Game</title>
-  <link rel="stylesheet" href="style.css?v=3" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#121722">
+<title>Snake Arena</title>
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
-  <main class="app">
-    <section id="homeScreen" class="screen active">
-      <div class="card home-card">
-        <div class="snake-logo">🐍</div>
-        <h1>Snake Game</h1>
-        <p>Eat. Grow. Survive.</p>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-icon">🐍</span><div><b>Snake Arena</b><small>Eat • Grow • Survive</small></div></div>
+    <button id="accountBtn" class="avatar-btn">👤</button>
+  </header>
 
-        <div class="stats">
-          <div class="stat"><span>🏆 High Score</span><strong id="homeHighScore">0</strong></div>
-          <div class="stat"><span>🎮 Games Played</span><strong id="gamesPlayed">0</strong></div>
-        </div>
+  <nav class="tabs">
+    <button data-page="home" class="tab active">🏠<span>Home</span></button>
+    <button data-page="shop" class="tab">🛒<span>Shop</span></button>
+    <button data-page="leaderboard" class="tab">🏆<span>Ranks</span></button>
+    <button data-page="profile" class="tab">👤<span>Profile</span></button>
+  </nav>
 
-        <button id="playBtn" class="btn primary">▶ Play Game</button>
-        <button id="settingsBtn" class="btn secondary">⚙ Settings</button>
+  <section id="homePage" class="page active">
+    <div class="hero card">
+      <div class="big-logo">🐍</div>
+      <p class="eyebrow">WELCOME TO THE ARENA</p>
+      <h1>Snake Arena</h1>
+      <p class="subtitle">Classic gameplay with skins, coins and global rankings.</p>
+      <div class="home-stats">
+        <div><span>🏆 Best</span><strong id="homeBest">0</strong></div>
+        <div><span>🪙 Coins</span><strong id="homeCoins">0</strong></div>
+        <div><span>🎮 Games</span><strong id="homeGames">0</strong></div>
       </div>
-    </section>
-
-    <section id="gameScreen" class="screen">
-      <div class="card game-card">
-        <header>
-          <button id="backBtn" class="icon-btn">←</button>
-          <h2>Snake Game</h2>
-          <button id="pauseBtn" class="pause-btn">Pause</button>
-        </header>
-
-        <div class="game-stats">
-          <div class="stat"><span>Score</span><strong id="score">0</strong></div>
-          <div class="stat"><span>High Score</span><strong id="highScore">0</strong></div>
-        </div>
-
-        <div class="board-wrap">
-          <canvas id="gameCanvas" width="600" height="600"></canvas>
-          <div id="combo" class="combo"></div>
-        </div>
-
-        <p id="gameMessage">Use swipe, buttons, or arrow keys.</p>
-
-        <div class="controls">
-          <button data-dir="up">▲</button>
-          <div class="control-row">
-            <button data-dir="left">◀</button>
-            <button data-dir="down">▼</button>
-            <button data-dir="right">▶</button>
-          </div>
-        </div>
-
-        <button id="restartBtn" class="btn secondary">↻ Restart Game</button>
-      </div>
-    </section>
-
-    <section id="settingsScreen" class="screen">
-      <div class="card settings-card">
-        <header>
-          <button id="settingsBackBtn" class="icon-btn">←</button>
-          <h2>Settings</h2><div class="header-space"></div>
-        </header>
-
-        <div class="setting">
-          <div><strong>Game Speed</strong><span>Choose difficulty</span></div>
-          <select id="difficulty">
-            <option value="easy">Easy</option>
-            <option value="normal" selected>Normal</option>
-            <option value="hard">Hard</option>
-          </select>
-        </div>
-
-        <div class="setting">
-          <div><strong>Grid</strong><span>Show game board lines</span></div>
-          <label class="switch"><input id="gridToggle" type="checkbox" checked><span></span></label>
-        </div>
-
-        <div class="setting">
-          <div><strong>Sound Effects</strong><span>Food and game events</span></div>
-          <label class="switch"><input id="soundToggle" type="checkbox" checked><span></span></label>
-        </div>
-
-        <div class="setting">
-          <div><strong>Reset Data</strong><span>Clear high score and statistics</span></div>
-          <button id="resetBtn" class="reset-btn">Reset</button>
-        </div>
-
-        <p class="saved">Your game data is currently saved on this device.</p>
-      </div>
-    </section>
-  </main>
-
-  <div id="gameOverModal" class="modal">
-    <div class="modal-card">
-      <div class="gameover-icon">💀</div>
-      <h2>Game Over!</h2>
-      <p>Your Score</p>
-      <strong id="finalScore">0</strong>
-      <button id="playAgainBtn" class="btn primary">Play Again</button>
-      <button id="homeBtn" class="btn secondary">Home</button>
+      <button id="playBtn" class="btn primary xl">▶ Start Game</button>
+      <button id="homeSettingsBtn" class="btn ghost">⚙ Game Settings</button>
     </div>
-  </div>
+  </section>
 
-  <script src="script.js?v=3"></script>
+  <section id="gamePage" class="page">
+    <div class="card game-card">
+      <div class="game-head">
+        <button id="backGameBtn" class="icon-btn">←</button>
+        <div class="game-title"><b>Snake Arena</b><small id="activeSkinName">Classic Snake</small></div>
+        <button id="pauseBtn" class="pause-btn">Pause</button>
+      </div>
+      <div class="score-grid">
+        <div><span>Score</span><strong id="score">0</strong></div>
+        <div><span>Best</span><strong id="gameBest">0</strong></div>
+        <div><span>Coins</span><strong id="gameCoins">0</strong></div>
+      </div>
+      <div class="board-wrap">
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+        <div id="comboText" class="float-text"></div>
+      </div>
+      <div id="gameMessage" class="game-message">Swipe or use the buttons.</div>
+      <div class="dpad">
+        <button data-dir="up">▲</button>
+        <div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div>
+      </div>
+      <button id="restartBtn" class="btn ghost">↻ Restart</button>
+    </div>
+  </section>
+
+  <section id="shopPage" class="page">
+    <div class="page-head"><div><p class="eyebrow">CUSTOMIZE</p><h2>Snake Shop</h2></div><div class="coin-pill">🪙 <b id="shopCoins">0</b></div></div>
+    <div id="shopGrid" class="shop-grid"></div>
+  </section>
+
+  <section id="leaderboardPage" class="page">
+    <div class="page-head"><div><p class="eyebrow">COMPETE</p><h2>Global Ranks</h2></div><button id="refreshRanks" class="mini-btn">↻ Refresh</button></div>
+    <div class="rank-note" id="rankNote">Sign in to submit scores to the global leaderboard.</div>
+    <div class="card table-card"><div class="table-head"><span>#</span><span>Player</span><span>Score</span></div><div id="leaderboardList"></div></div>
+  </section>
+
+  <section id="profilePage" class="page">
+    <div class="page-head"><div><p class="eyebrow">ACCOUNT</p><h2>Profile</h2></div></div>
+    <div id="profileLoggedOut" class="card auth-card">
+      <div class="profile-icon">👤</div><h3>Sign in to save your progress</h3>
+      <p>Create an account to sync your profile, coins, skins and scores across devices.</p>
+      <button id="loginOpenBtn" class="btn primary">Login / Sign Up</button>
+    </div>
+    <div id="profileLoggedIn" class="profile-wrap hidden">
+      <div class="card profile-card">
+        <div class="profile-top"><div id="profileAvatar" class="profile-avatar">🐍</div><div><h3 id="profileUsername">Player</h3><p id="profileEmail"></p></div></div>
+        <div class="profile-stats"><div><span>🏆 Best</span><b id="profileBest">0</b></div><div><span>🪙 Coins</span><b id="profileCoins">0</b></div><div><span>🎮 Games</span><b id="profileGames">0</b></div><div><span>🐍 Skin</span><b id="profileSkin">Classic</b></div></div>
+      </div>
+      <div class="card profile-actions"><button id="editProfileBtn" class="btn ghost">✏ Edit Profile</button><button id="logoutBtn" class="btn danger">Log Out</button></div>
+    </div>
+  </section>
+
+  <section id="settingsPage" class="page">
+    <div class="page-head"><div><p class="eyebrow">PREFERENCES</p><h2>Settings</h2></div></div>
+    <div class="card settings-card">
+      <div class="setting"><div><b>Difficulty</b><small>Game speed</small></div><select id="difficulty"><option value="easy">Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div>
+      <div class="setting"><div><b>Grid</b><small>Show board lines</small></div><label class="switch"><input id="gridToggle" type="checkbox"><span></span></label></div>
+      <div class="setting"><div><b>Sound</b><small>Game sounds</small></div><label class="switch"><input id="soundToggle" type="checkbox"><span></span></label></div>
+      <button id="resetLocalBtn" class="btn danger">Reset Local Game Data</button>
+    </div>
+  </section>
+</div>
+
+<div id="authModal" class="modal">
+  <div class="modal-card auth-modal">
+    <button id="closeAuth" class="modal-close">×</button>
+    <div class="modal-icon">👤</div><h2 id="authTitle">Login</h2>
+    <p id="authSubtitle">Welcome back to Snake Arena.</p>
+    <form id="authForm">
+      <input id="usernameInput" class="auth-user hidden" type="text" placeholder="Username (sign up only)" maxlength="20">
+      <input id="emailInput" type="email" placeholder="Email" required>
+      <input id="passwordInput" type="password" placeholder="Password" minlength="6" required>
+      <button class="btn primary" type="submit" id="authSubmit">Login</button>
+    </form>
+    <button id="switchAuth" class="text-btn">Create an account</button>
+    <div id="authStatus" class="status"></div>
+  </div>
+</div>
+
+<div id="editModal" class="modal">
+  <div class="modal-card"><button class="modal-close" id="closeEdit">×</button><div class="modal-icon">✏️</div><h2>Edit Profile</h2>
+    <input id="editUsername" type="text" maxlength="20" placeholder="Username">
+    <input id="editAvatar" type="text" maxlength="4" placeholder="Emoji avatar, e.g. 🐍">
+    <button id="saveProfileBtn" class="btn primary">Save Profile</button><div id="editStatus" class="status"></div>
+  </div>
+</div>
+
+<div id="gameOverModal" class="modal">
+  <div class="modal-card result-card"><div class="modal-icon">🏁</div><h2>Run Complete</h2><p>Your score</p><strong id="finalScore">0</strong><div id="resultEarned" class="earned">+0 🪙</div>
+  <button id="playAgainBtn" class="btn primary">Play Again</button><button id="resultHomeBtn" class="btn ghost">Home</button></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js?v=1"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>
