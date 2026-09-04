@@ -1,14 +1,13 @@
-# Snake Game Phase 2
+# Snake Game Phase 2 - Fixed
 
-Features:
-- Home screen
-- High score saved on the device
-- Games played counter
+Replace your existing `index.html`, `style.css`, and `script.js` with these files.
+
+The JavaScript was rewritten to fix the buttons:
+- Play Game
 - Settings
-- Easy / Normal / Hard speed
-- Grid toggle
-- Pause and restart
-- Game over screen
-- Mobile buttons and swipe controls
+- Back
+- Pause
+- Restart
+- Mobile controls
 
-Upload these files to your existing GitHub repository. Vercel will automatically deploy the update after you push to the main branch.
+After pushing to GitHub, wait for Vercel to finish the new deployment.
