@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#121722">
 <title>Snake Arena</title>
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 <div class="app">
@@ -32,7 +32,10 @@
         <div><span>🪙 Coins</span><strong id="homeCoins">0</strong></div>
         <div><span>🎮 Games</span><strong id="homeGames">0</strong></div>
       </div>
-      <button id="playBtn" class="btn primary xl">▶ Start Game</button>
+      <div class="game-picker">
+        <button id="playBtn" class="game-choice snake-choice"><span>🐍</span><b>Snake Arena</b><small>Classic • Swipe • Grow</small><em>Play →</em></button>
+        <button id="playBirdyBtn" class="game-choice bird-choice"><span>🐦</span><b>Birdy Bird</b><small>Tap • Fly • Survive</small><em>Play →</em></button>
+      </div>
       <button id="homeSettingsBtn" class="btn ghost">⚙ Game Settings</button>
     </div>
   </section>
@@ -62,6 +65,27 @@
     </div>
   </section>
 
+  <section id="birdyPage" class="page">
+    <div class="card game-card birdy-card">
+      <div class="game-head">
+        <button id="backBirdyBtn" class="icon-btn">←</button>
+        <div class="game-title"><b>🐦 Birdy Bird</b><small>Tap to flap through the pipes</small></div>
+        <button id="birdyPauseBtn" class="pause-btn">Pause</button>
+      </div>
+      <div class="score-grid">
+        <div><span>Score</span><strong id="birdyScore">0</strong></div>
+        <div><span>Best</span><strong id="birdyBest">0</strong></div>
+        <div><span>Coins</span><strong id="birdyCoins">0</strong></div>
+      </div>
+      <div class="board-wrap birdy-wrap">
+        <canvas id="birdyCanvas" width="600" height="760"></canvas>
+        <div id="birdyStartHint" class="birdy-hint">Tap anywhere to start & flap</div>
+      </div>
+      <div id="birdyMessage" class="game-message">Tap the screen to fly.</div>
+      <button id="birdyRestartBtn" class="btn ghost">↻ Restart Birdy Bird</button>
+    </div>
+  </section>
+
   <section id="shopPage" class="page">
     <div class="page-head"><div><p class="eyebrow">CUSTOMIZE</p><h2>Snake Shop</h2></div><div class="coin-pill">🪙 <b id="shopCoins">0</b></div></div>
     <div id="shopGrid" class="shop-grid"></div>
@@ -69,6 +93,7 @@
 
   <section id="leaderboardPage" class="page">
     <div class="page-head"><div><p class="eyebrow">COMPETE</p><h2>Global Ranks</h2></div><button id="refreshRanks" class="mini-btn">↻ Refresh</button></div>
+    <div class="rank-switch"><button class="rank-game active" data-rank-game="snake">🐍 Snake</button><button class="rank-game" data-rank-game="birdy">🐦 Birdy Bird</button></div>
     <div class="rank-note" id="rankNote">Sign in to submit scores to the global leaderboard.</div>
     <div class="card table-card"><div class="table-head"><span>#</span><span>Player</span><span>Score</span></div><div id="leaderboardList"></div></div>
   </section>
@@ -129,8 +154,13 @@
   <button id="playAgainBtn" class="btn primary">Play Again</button><button id="resultHomeBtn" class="btn ghost">Home</button></div>
 </div>
 
+<div id="birdyOverModal" class="modal">
+  <div class="modal-card result-card"><div class="modal-icon">🐦</div><h2>Flight Complete</h2><p>Your Birdy score</p><strong id="birdyFinalScore">0</strong><div id="birdyResultEarned" class="earned">+0 🪙</div>
+  <button id="birdyPlayAgainBtn" class="btn primary">Fly Again</button><button id="birdyResultHomeBtn" class="btn ghost">Home</button></div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=1"></script>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
