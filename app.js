@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sb = onlineReady && window.supabase ? window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey) : null;
 
   const $ = id => document.getElementById(id);
-  const pages = ["home","game","shop","leaderboard","profile","settings"];
+  const pages = ["home","game","birdy","shop","leaderboard","profile","settings"];
   const skins = [
     {id:"classic",name:"Classic Snake",icon:"🐍",price:0,bg:"#dff0e8",body:"#4bbf76",head:"#86f23b"},
     {id:"fire",name:"Fire Snake",icon:"🔥",price:150,bg:"#ffe9df",body:"#ef784e",head:"#ffb340"},
@@ -22,7 +22,9 @@ document.addEventListener("DOMContentLoaded", () => {
   local.owned = Array.isArray(local.owned) ? local.owned : ["classic"];
   local.skin = local.skin || "classic";
   local.settings = Object.assign({difficulty:"normal",grid:true,sound:true}, local.settings || {});
-  let profile = null, user = null;
+  local.birdyHighScore = Number(local.birdyHighScore || 0);
+  local.birdyGames = Number(local.birdyGames || 0);
+  let profile = null, user = null, activeRankGame="snake";
   let snake = [], food = null, bonus = null, dir={x:1,y:0}, next={x:1,y:0}, score=0, timer=null, paused=false, running=false, touchX=0, touchY=0;
 
   function saveLocal(){ localStorage.setItem("snakeArenaLocal", JSON.stringify(local)); }
@@ -32,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("profileBest").textContent=profile?.high_score ?? local.highScore;
     $("profileCoins").textContent=profile?.coins ?? local.coins;
     $("profileGames").textContent=profile?.games_played ?? local.games;
+    $("birdyBest").textContent=local.birdyHighScore; $("birdyCoins").textContent=local.coins;
     const s=skins.find(x=>x.id===local.skin)||skins[0]; $("profileSkin").textContent=s.name; $("activeSkinName").textContent=s.name;
     $("profileLoggedOut").classList.toggle("hidden",!!user); $("profileLoggedIn").classList.toggle("hidden",!user);
     if(user){$("profileUsername").textContent=profile?.username || user.email?.split("@")[0] || "Player";$("profileEmail").textContent=user.email||"";$("profileAvatar").textContent=profile?.avatar_url || "🐍";}
@@ -80,10 +83,11 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadLeaderboard(){
     const list=$("leaderboardList"); if(!list)return;
     list.innerHTML='<div class="rank-row"><span>…</span><span>Loading…</span><strong>—</strong></div>';
-    if(!sb){ $("rankNote").textContent="Offline mode: connect Supabase to use the global leaderboard."; list.innerHTML='<div class="rank-row"><span>—</span><span>Connect Supabase for online ranks</span><strong>—</strong></div>'; return; }
-    $("rankNote").textContent=user?"Your scores can be submitted after each run.":"Sign in to submit scores to the global leaderboard.";
-    const {data,error}=await sb.from("leaderboard").select("score,username,avatar_url").order("score",{ascending:false}).limit(50);
-    if(error){list.innerHTML=`<div class="rank-row"><span>!</span><span>${escapeHtml(error.message)}</span><strong>—</strong></div>`;return;}
+    const tableName=activeRankGame==="birdy"?"birdy_leaderboard":"leaderboard";
+    if(!sb){ $("rankNote").textContent="Offline mode: connect Supabase to use global rankings."; list.innerHTML='<div class="rank-row"><span>—</span><span>Connect Supabase for online ranks</span><strong>—</strong></div>'; return; }
+    $("rankNote").textContent=user?`Your ${activeRankGame==="birdy"?"Birdy Bird":"Snake"} scores are submitted after each run.`:"Sign in to submit scores to the global leaderboard.";
+    const {data,error}=await sb.from(tableName).select("score,username,avatar_url").order("score",{ascending:false}).limit(50);
+    if(error){list.innerHTML=`<div class="rank-row"><span>!</span><span>${escapeHtml(error.message.includes("does not exist")?"Run the Birdy Bird SQL migration first.":error.message)}</span><strong>—</strong></div>`;return;}
     if(!data.length){list.innerHTML='<div class="rank-row"><span>—</span><span>No scores yet</span><strong>—</strong></div>';return;}
     list.innerHTML=data.map((r,i)=>`<div class="rank-row"><span>${i<3?["🥇","🥈","🥉"][i]:i+1}</span><span class="rank-player"><span class="rank-avatar">${escapeHtml(r.avatar_url||"🐍")}</span>${escapeHtml(r.username||"Player")}</span><strong class="rank-score">${r.score}</strong></div>`).join("");
   }
@@ -141,16 +145,34 @@ document.addEventListener("DOMContentLoaded", () => {
   function beep(freq){if(!local.settings.sound)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=freq;g.gain.setValueAtTime(.06,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.12);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.13)}catch(e){}}
   function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 
+  // Birdy Bird
+  const birdyCanvas=$("birdyCanvas"), birdyCtx=birdyCanvas.getContext("2d");
+  let birdy={x:155,y:380,vy:0,score:0,pipes:[],running:false,paused:false,started:false,raf:null,last:0,nextPipe:0};
+  function resetBirdy(){
+    cancelAnimationFrame(birdy.raf); birdy={x:155,y:380,vy:0,score:0,pipes:[],running:true,paused:false,started:false,raf:null,last:0,nextPipe:0};
+    $("birdyScore").textContent=0; $("birdyPauseBtn").textContent="Pause"; $("birdyMessage").textContent="Tap the screen to fly."; $("birdyStartHint").style.display="grid"; drawBirdy();
+  }
+  function startBirdy(){showModal("birdyOverModal",false);navigate("birdy");resetBirdy();}
+  function flap(){if(!birdy.running||birdy.paused)return; if(!birdy.started){birdy.started=true;birdy.last=performance.now();$("birdyStartHint").style.display="none";birdy.raf=requestAnimationFrame(birdyLoop);} birdy.vy=-520;beep(650);}
+  function birdyLoop(now){if(!birdy.running)return;if(birdy.paused){birdy.raf=requestAnimationFrame(birdyLoop);return;}let dt=Math.min(.033,(now-birdy.last)/1000||0);birdy.last=now;birdy.vy+=1250*dt;birdy.y+=birdy.vy*dt;birdy.nextPipe-=dt;if(birdy.nextPipe<=0){let gap=190+Math.random()*35;let gapY=170+Math.random()*(420-gap);birdy.pipes.push({x:620,w:92,gapY,gap,scored:false});birdy.nextPipe=1.65;}birdy.pipes.forEach(p=>p.x-=190*dt);birdy.pipes=birdy.pipes.filter(p=>p.x+p.w>-10);for(const p of birdy.pipes){if(!p.scored&&p.x+p.w<birdy.x-20){p.scored=true;birdy.score++;$("birdyScore").textContent=birdy.score;showBirdyFloat();beep(760);}if(birdy.x+20>p.x&&birdy.x-20<p.x+p.w&&(birdy.y-18<p.gapY||birdy.y+18>p.gapY+p.gap)){endBirdy();return;}}if(birdy.y<18||birdy.y>742){endBirdy();return;}drawBirdy();birdy.raf=requestAnimationFrame(birdyLoop);}
+  function drawBirdy(){let c=birdyCtx;c.clearRect(0,0,600,760);let g=c.createLinearGradient(0,0,0,760);g.addColorStop(0,"#65c4ff");g.addColorStop(1,"#d9f5ff");c.fillStyle=g;c.fillRect(0,0,600,760);c.fillStyle="rgba(255,255,255,.45)";for(let i=0;i<5;i++){c.beginPath();c.arc((i*150+80)%620,100+(i%3)*90,45,0,Math.PI*2);c.fill();}birdy.pipes.forEach(p=>{c.fillStyle="#4caf50";c.fillRect(p.x,0,p.w,p.gapY);c.fillRect(p.x,p.gapY+p.gap,p.w,760-(p.gapY+p.gap));c.fillStyle="#2f8b3c";c.fillRect(p.x-8,p.gapY-20,p.w+16,20);c.fillRect(p.x-8,p.gapY+p.gap,p.w+16,20);});c.fillStyle="#ffd54f";c.beginPath();c.arc(birdy.x,birdy.y,24,0,Math.PI*2);c.fill();c.fillStyle="#ff9f43";c.beginPath();c.moveTo(birdy.x+22,birdy.y);c.lineTo(birdy.x+45,birdy.y+7);c.lineTo(birdy.x+22,birdy.y+14);c.fill();c.fillStyle="#fff";c.beginPath();c.arc(birdy.x+8,birdy.y-7,7,0,Math.PI*2);c.fill();c.fillStyle="#253140";c.beginPath();c.arc(birdy.x+10,birdy.y-7,3,0,Math.PI*2);c.fill();c.fillStyle="#fff";c.font="900 52px system-ui";c.textAlign="center";c.fillText(birdy.score,300,78);}
+  function showBirdyFloat(){ $("birdyMessage").textContent=`Great! ${birdy.score} pipe${birdy.score===1?"":"s"} cleared.`; }
+  async function submitBirdyScore(score){if(!sb||!user)return;const {error}=await sb.rpc("submit_birdy_score",{p_score:score});if(error)console.warn(error.message);await loadProfile();updateUI();}
+  function endBirdy(){if(!birdy.running)return;birdy.running=false;cancelAnimationFrame(birdy.raf);local.birdyGames++;let earned=Math.max(0,birdy.score*5);local.coins+=earned;if(birdy.score>local.birdyHighScore)local.birdyHighScore=birdy.score;saveLocal();updateUI();$("birdyFinalScore").textContent=birdy.score;$("birdyResultEarned").textContent=`+${earned} 🪙`;submitBirdyScore(birdy.score);showModal("birdyOverModal",true);}
+
   // Navigation
   document.querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>navigate(btn.dataset.page));
-  $("playBtn").onclick=startGame; $("backGameBtn").onclick=()=>{clearInterval(timer);running=false;navigate("home")};
+  $("playBtn").onclick=startGame; $("playBirdyBtn").onclick=startBirdy; $("backGameBtn").onclick=()=>{clearInterval(timer);running=false;navigate("home")}; $("backBirdyBtn").onclick=()=>{birdy.running=false;cancelAnimationFrame(birdy.raf);navigate("home")};
   $("pauseBtn").onclick=()=>{if(!running)return;paused=!paused;$("pauseBtn").textContent=paused?"Resume":"Pause";$("gameMessage").textContent=paused?"Game Paused":"Swipe or use the buttons."};
-  $("restartBtn").onclick=startGame;$("playAgainBtn").onclick=startGame;$("resultHomeBtn").onclick=()=>{showModal("gameOverModal",false);navigate("home")};
-  $("homeSettingsBtn").onclick=()=>navigate("settings");$("refreshRanks").onclick=loadLeaderboard;
+  $("restartBtn").onclick=startGame; $("birdyRestartBtn").onclick=startBirdy; $("birdyPlayAgainBtn").onclick=startBirdy; $("birdyResultHomeBtn").onclick=()=>{showModal("birdyOverModal",false);navigate("home")}; $("birdyPauseBtn").onclick=()=>{if(!birdy.running)return;birdy.paused=!birdy.paused;$("birdyPauseBtn").textContent=birdy.paused?"Resume":"Pause";$("birdyMessage").textContent=birdy.paused?"Flight Paused":"Tap to fly."};$("playAgainBtn").onclick=startGame;$("resultHomeBtn").onclick=()=>{showModal("gameOverModal",false);navigate("home")};
+  $("homeSettingsBtn").onclick=()=>navigate("settings");$("refreshRanks").onclick=loadLeaderboard; document.querySelectorAll("[data-rank-game]").forEach(b=>b.onclick=()=>{activeRankGame=b.dataset.rankGame;document.querySelectorAll("[data-rank-game]").forEach(x=>x.classList.toggle("active",x===b));loadLeaderboard();});
   document.querySelectorAll("[data-dir]").forEach(b=>b.onclick=()=>setDirection(b.dataset.dir));
   document.addEventListener("keydown",e=>{const k={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"}[e.key];if(k){e.preventDefault();setDirection(k)}if(e.key===" "){e.preventDefault();$("pauseBtn").click()}});
   canvas.addEventListener("touchstart",e=>{const t=e.changedTouches[0];touchX=t.clientX;touchY=t.clientY},{passive:true});
   canvas.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-touchX,dy=t.clientY-touchY;if(Math.max(Math.abs(dx),Math.abs(dy))<25)return;if(Math.abs(dx)>Math.abs(dy))setDirection(dx>0?"right":"left");else setDirection(dy>0?"down":"up")},{passive:true});
+  birdyCanvas.addEventListener("pointerdown",e=>{e.preventDefault();flap();});
+  document.addEventListener("keydown",e=>{if(e.code==="Space"&&$("birdyPage").classList.contains("active")){e.preventDefault();flap();}});
+
 
   // Auth
   let signupMode=false;
