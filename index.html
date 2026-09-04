@@ -1,102 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#111318" />
   <title>Snake Game</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
-<main class="app">
+  <main class="app">
+    <section id="homeScreen" class="screen active">
+      <div class="card home-card">
+        <div class="snake-logo">🐍</div>
+        <h1>Snake Game</h1>
+        <p>Eat. Grow. Survive.</p>
 
-<section id="homeScreen" class="screen active">
-  <div class="hero">
-    <div class="snake-logo">🐍</div>
-    <h1>Snake Game</h1>
-    <p>Eat. Grow. Survive.</p>
-  </div>
-  <div class="stats-card">
-    <div><span>🏆 High Score</span><strong id="homeHighScore">0</strong></div>
-    <div><span>🎮 Games Played</span><strong id="gamesPlayed">0</strong></div>
-  </div>
-  <div class="menu-buttons">
-    <button id="playBtn" type="button" class="primary">▶ Play Game</button>
-    <button id="settingsBtn" type="button" class="secondary">⚙ Settings</button>
-  </div>
-</section>
+        <div class="stats">
+          <div class="stat"><span>🏆 High Score</span><strong id="homeHighScore">0</strong></div>
+          <div class="stat"><span>🎮 Games Played</span><strong id="gamesPlayed">0</strong></div>
+        </div>
 
-<section id="gameScreen" class="screen">
-  <header class="game-header">
-    <button id="backBtn" type="button" class="icon-btn">←</button>
-    <h2>Snake Game</h2>
-    <button id="pauseBtn" type="button" class="small-btn">Pause</button>
-  </header>
+        <button id="playBtn" class="btn primary">▶ Play Game</button>
+        <button id="settingsBtn" class="btn secondary">⚙ Settings</button>
+      </div>
+    </section>
 
-  <div class="score-row">
-    <div class="score-card"><span>Score</span><strong id="score">0</strong></div>
-    <div class="score-card"><span>High Score</span><strong id="highScore">0</strong></div>
-  </div>
+    <section id="gameScreen" class="screen">
+      <div class="card game-card">
+        <header>
+          <button id="backBtn" class="icon-btn">←</button>
+          <h2>Snake Game</h2>
+          <button id="pauseBtn" class="pause-btn">Pause</button>
+        </header>
 
-  <canvas id="gameCanvas" width="400" height="400"></canvas>
-  <p id="gameMessage" class="game-message">Use swipe, buttons, or arrow keys.</p>
+        <div class="game-stats">
+          <div class="stat"><span>Score</span><strong id="score">0</strong></div>
+          <div class="stat"><span>High Score</span><strong id="highScore">0</strong></div>
+        </div>
 
-  <div class="controls">
-    <button type="button" class="control up" data-direction="up">▲</button>
-    <button type="button" class="control left" data-direction="left">◀</button>
-    <button type="button" class="control down" data-direction="down">▼</button>
-    <button type="button" class="control right" data-direction="right">▶</button>
-  </div>
+        <div class="board-wrap">
+          <canvas id="gameCanvas" width="600" height="600"></canvas>
+          <div id="combo" class="combo"></div>
+        </div>
 
-  <button id="restartBtn" type="button" class="secondary full">↻ Restart Game</button>
-</section>
+        <p id="gameMessage">Use swipe, buttons, or arrow keys.</p>
 
-<section id="settingsScreen" class="screen">
-  <header class="simple-header">
-    <button id="settingsBackBtn" type="button" class="icon-btn">←</button>
-    <h2>Settings</h2>
-    <span></span>
-  </header>
+        <div class="controls">
+          <button data-dir="up">▲</button>
+          <div class="control-row">
+            <button data-dir="left">◀</button>
+            <button data-dir="down">▼</button>
+            <button data-dir="right">▶</button>
+          </div>
+        </div>
 
-  <div class="settings-list">
-    <div class="setting-item">
-      <div><strong>Game Speed</strong><span>Choose difficulty</span></div>
-      <select id="speedSelect">
-        <option value="180">Easy</option>
-        <option value="120" selected>Normal</option>
-        <option value="75">Hard</option>
-      </select>
+        <button id="restartBtn" class="btn secondary">↻ Restart Game</button>
+      </div>
+    </section>
+
+    <section id="settingsScreen" class="screen">
+      <div class="card settings-card">
+        <header>
+          <button id="settingsBackBtn" class="icon-btn">←</button>
+          <h2>Settings</h2><div class="header-space"></div>
+        </header>
+
+        <div class="setting">
+          <div><strong>Game Speed</strong><span>Choose difficulty</span></div>
+          <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+
+        <div class="setting">
+          <div><strong>Grid</strong><span>Show game board lines</span></div>
+          <label class="switch"><input id="gridToggle" type="checkbox" checked><span></span></label>
+        </div>
+
+        <div class="setting">
+          <div><strong>Sound Effects</strong><span>Food and game events</span></div>
+          <label class="switch"><input id="soundToggle" type="checkbox" checked><span></span></label>
+        </div>
+
+        <div class="setting">
+          <div><strong>Reset Data</strong><span>Clear high score and statistics</span></div>
+          <button id="resetBtn" class="reset-btn">Reset</button>
+        </div>
+
+        <p class="saved">Your game data is currently saved on this device.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="gameOverModal" class="modal">
+    <div class="modal-card">
+      <div class="gameover-icon">💀</div>
+      <h2>Game Over!</h2>
+      <p>Your Score</p>
+      <strong id="finalScore">0</strong>
+      <button id="playAgainBtn" class="btn primary">Play Again</button>
+      <button id="homeBtn" class="btn secondary">Home</button>
     </div>
-
-    <div class="setting-item">
-      <div><strong>Grid</strong><span>Show game board lines</span></div>
-      <label class="switch">
-        <input id="gridToggle" type="checkbox" checked>
-        <span></span>
-      </label>
-    </div>
-
-    <div class="setting-item">
-      <div><strong>Reset Data</strong><span>Clear high score and statistics</span></div>
-      <button id="resetDataBtn" type="button" class="danger">Reset</button>
-    </div>
   </div>
 
-  <p class="settings-note">Your game data is currently saved on this device.</p>
-</section>
-
-<div id="gameOverModal" class="modal hidden">
-  <div class="modal-card">
-    <div class="gameover-icon">💀</div>
-    <h2>Game Over!</h2>
-    <p>Your Score</p>
-    <strong id="finalScore" class="final-score">0</strong>
-    <p id="newHighScoreText" class="new-high hidden">🏆 New High Score!</p>
-    <button id="playAgainBtn" type="button" class="primary">Play Again</button>
-    <button id="homeBtn" type="button" class="secondary">Home</button>
-  </div>
-</div>
-
-</main>
-<script src="script.js?v=2"></script>
+  <script src="script.js?v=3"></script>
 </body>
 </html>
