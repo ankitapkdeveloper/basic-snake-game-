@@ -1,202 +1,78 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const CONFIG = window.SNAKE_CONFIG || {};
-  const onlineReady = CONFIG.supabaseUrl && !CONFIG.supabaseUrl.includes("YOUR_") &&
-    CONFIG.supabaseKey && !CONFIG.supabaseKey.includes("YOUR_");
-  const sb = onlineReady && window.supabase ? window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey) : null;
+document.addEventListener("DOMContentLoaded",()=>{
+const $=id=>document.getElementById(id); const CONFIG=window.SNAKE_CONFIG||{};
+const onlineReady=!!(CONFIG.supabaseUrl&&CONFIG.supabaseKey&&!String(CONFIG.supabaseUrl).includes("YOUR_")&&!String(CONFIG.supabaseKey).includes("YOUR_"));
+const sb=onlineReady&&window.supabase?window.supabase.createClient(CONFIG.supabaseUrl,CONFIG.supabaseKey):null;
+const pages=["home","game","birdy","archery","tower","reaction","shop","leaderboard","profile","settings"];
+const skins=[{id:"classic",name:"Classic Snake",icon:"🐍",price:0,bg:"#dff0e8",body:"#4bbf76",head:"#86f23b"},{id:"fire",name:"Fire Snake",icon:"🔥",price:150,bg:"#ffe9df",body:"#ef784e",head:"#ffb340"},{id:"ocean",name:"Ocean Snake",icon:"🌊",price:300,bg:"#e0eff9",body:"#3d96c8",head:"#6dd5fa"},{id:"royal",name:"Royal Snake",icon:"👑",price:500,bg:"#eee5fa",body:"#8c63c6",head:"#b796ff"},{id:"neon",name:"Neon Snake",icon:"⚡",price:750,bg:"#e5f6ef",body:"#16c985",head:"#b7ff5c"},{id:"rainbow",name:"Rainbow Snake",icon:"🌈",price:1000,bg:"#f6e9fa",body:"#db6cd0",head:"#ffdd6d"}];
+let local=JSON.parse(localStorage.getItem("snakeArenaLocal")||"{}"); Object.assign(local,{highScore:Number(local.highScore||0),games:Number(local.games||0),coins:Number(local.coins??100),owned:Array.isArray(local.owned)?local.owned:["classic"],skin:local.skin||"classic",settings:Object.assign({difficulty:"normal",grid:true,sound:true},local.settings||{}),birdyHighScore:Number(local.birdyHighScore||0),birdyGames:Number(local.birdyGames||0),archeryHighScore:Number(local.archeryHighScore||0),archeryGames:Number(local.archeryGames||0),towerHighScore:Number(local.towerHighScore||0),towerGames:Number(local.towerGames||0),reactionBest:local.reactionBest==null?null:Number(local.reactionBest),reactionGames:Number(local.reactionGames||0)});
+let user=null,profile=null,activeRankGame="snake";
+function save(){localStorage.setItem("snakeArenaLocal",JSON.stringify(local))} function esc(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
+function show(page){pages.forEach(p=>{const e=$(p+"Page");if(e)e.classList.toggle("active",p===page)});document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===page));if(page==="home")updateUI();if(page==="shop")renderShop();if(page==="leaderboard")loadLeaderboard();if(page==="profile")updateUI()}
+function modal(id,on){$(id).classList.toggle("show",on)}
+function updateUI(){ $("homeBest").textContent=local.highScore;$("homeCoins").textContent=local.coins;$("homeGames").textContent=local.games;$("gameBest").textContent=local.highScore;$("gameCoins").textContent=local.coins;$("shopCoins").textContent=local.coins;$("birdyBest").textContent=local.birdyHighScore;$("birdyCoins").textContent=local.coins;$("archeryBest").textContent=local.archeryHighScore;if($("archeryCoins")) $("archeryCoins").textContent=local.coins;$("towerBest").textContent=local.towerHighScore;$("reactionCoins").textContent=local.coins;$("reactionBest").textContent=local.reactionBest==null?"—":local.reactionBest+" ms";const s=skins.find(x=>x.id===local.skin)||skins[0];$("activeSkinName").textContent=s.name;$("profileSkin").textContent=s.name;$("profileLoggedOut").classList.toggle("hidden",!!user);$("profileLoggedIn").classList.toggle("hidden",!user);$("profileBest").textContent=profile?.high_score??local.highScore;$("profileCoins").textContent=profile?.coins??local.coins;$("profileGames").textContent=profile?.games_played??local.games;if(user){$("profileUsername").textContent=profile?.username||user.email?.split("@")[0]||"Player";$("profileEmail").textContent=user.email||"";$("profileAvatar").textContent=profile?.avatar_url||"🐍"}}
+async function loadProfile(){if(!sb||!user)return;const {data,error}=await sb.from("profiles").select("*").eq("id",user.id).maybeSingle();if(!error&&data){profile=data;local.coins=data.coins;local.highScore=Math.max(local.highScore,data.high_score||0);local.games=Math.max(local.games,data.games_played||0);save()}else if(!data){const username=user.user_metadata?.username||user.email?.split("@")[0]||"Player";const {data:created}=await sb.from("profiles").insert({id:user.id,username,coins:100,high_score:0,games_played:0,avatar_url:"🐍"}).select().single();if(created)profile=created}}
+async function loadSession(){if(sb){const {data:{session}}=await sb.auth.getSession();user=session?.user||null;if(user)await loadProfile()}updateUI();loadLeaderboard()}
+function renderShop(){$("shopCoins").textContent=local.coins;$(`shopGrid`).innerHTML=skins.map(s=>{const own=local.owned.includes(s.id),sel=local.skin===s.id;return `<div class="shop-item ${sel?"selected":""}"><div class="skin-preview" style="background:${s.bg}">${s.icon}</div><h3>${s.name}</h3><p>${s.price===0?"Free":`🪙 ${s.price} coins`}</p><button data-skin="${s.id}" class="${own?"owned":"buy"}">${sel?"✓ Equipped":own?"Equip":`Buy • 🪙 ${s.price}`}</button></div>`}).join("");document.querySelectorAll("[data-skin]").forEach(b=>b.onclick=()=>{const s=skins.find(x=>x.id===b.dataset.skin);if(local.owned.includes(s.id)){local.skin=s.id;save();renderShop();updateUI();return}if(local.coins<s.price){alert("Not enough coins.");return}local.coins-=s.price;local.owned.push(s.id);local.skin=s.id;save();renderShop();updateUI()})}
 
-  const $ = id => document.getElementById(id);
-  const pages = ["home","game","birdy","shop","leaderboard","profile","settings"];
-  const skins = [
-    {id:"classic",name:"Classic Snake",icon:"🐍",price:0,bg:"#dff0e8",body:"#4bbf76",head:"#86f23b"},
-    {id:"fire",name:"Fire Snake",icon:"🔥",price:150,bg:"#ffe9df",body:"#ef784e",head:"#ffb340"},
-    {id:"ocean",name:"Ocean Snake",icon:"🌊",price:300,bg:"#e0eff9",body:"#3d96c8",head:"#6dd5fa"},
-    {id:"royal",name:"Royal Snake",icon:"👑",price:500,bg:"#eee5fa",body:"#8c63c6",head:"#b796ff"},
-    {id:"neon",name:"Neon Snake",icon:"⚡",price:750,bg:"#e5f6ef",body:"#16c985",head:"#b7ff5c"},
-    {id:"rainbow",name:"Rainbow Snake",icon:"🌈",price:1000,bg:"#f6e9fa",body:"#db6cd0",head:"#ffdd6d"}
-  ];
+// Snake
+const canvas=$("gameCanvas"),ctx=canvas.getContext("2d");const CELLS=30,SIZE=20;let snake=[],food=null,bonus=null,dir={x:1,y:0},next={x:1,y:0},score=0,timer=null,paused=false,running=false,touchX=0,touchY=0;
+function randomSnakeCell(){let p;do{p={x:Math.floor(Math.random()*CELLS),y:Math.floor(Math.random()*CELLS)}}while(snake.some(s=>s.x===p.x&&s.y===p.y)||(bonus&&bonus.x===p.x&&bonus.y===p.y));return p}
+function drawSnake(){ctx.clearRect(0,0,600,600);ctx.fillStyle="#11151b";ctx.fillRect(0,0,600,600);if(local.settings.grid){ctx.strokeStyle="rgba(105,130,140,.12)";for(let i=0;i<=600;i+=SIZE){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,600);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(600,i);ctx.stroke()}}const s=skins.find(x=>x.id===local.skin)||skins[0];drawFood(food,"#ff4c4c");if(bonus)drawFood(bonus,"#ffd34d");snake.forEach((p,i)=>{ctx.fillStyle=i===0?s.head:s.body;ctx.fillRect(p.x*SIZE+2,p.y*SIZE+2,SIZE-4,SIZE-4)})}
+function drawFood(p,c){if(!p)return;ctx.fillStyle=c;ctx.beginPath();ctx.arc(p.x*SIZE+10,p.y*SIZE+10,6.5,0,Math.PI*2);ctx.fill()}
+function startSnake(){modal("gameOverModal",false);show("game");clearInterval(timer);running=true;paused=false;score=0;dir={x:1,y:0};next={x:1,y:0};snake=[{x:15,y:15},{x:14,y:15},{x:13,y:15},{x:12,y:15}];food=randomSnakeCell();bonus=null;$("score").textContent=0;$("pauseBtn").textContent="Pause";drawSnake();timer=setInterval(snakeTick,{easy:150,normal:105,hard:72}[local.settings.difficulty])}
+function snakeTick(){if(!running||paused)return;dir=next;const h={x:snake[0].x+dir.x,y:snake[0].y+dir.y};if(h.x<0||h.y<0||h.x>=CELLS||h.y>=CELLS||snake.some(s=>s.x===h.x&&s.y===h.y)){endSnake();return}snake.unshift(h);let gain=0;if(h.x===food.x&&h.y===food.y){gain=10;food=randomSnakeCell();if(Math.random()<.25)bonus=randomSnakeCell()}if(bonus&&h.x===bonus.x&&h.y===bonus.y){gain=30;bonus=null}if(gain){score+=gain;$("score").textContent=score;beep(gain===30?720:520)}else snake.pop();drawSnake()}
+function setDir(n){if(!running||paused)return;const m={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}}[n];if(!m||(m.x===-dir.x&&m.y===-dir.y))return;next=m}
+function endSnake(){clearInterval(timer);running=false;local.games++;const earned=Math.floor(score/10);local.coins+=earned;if(score>local.highScore)local.highScore=score;save();updateUI();$("finalScore").textContent=score;$("resultEarned").textContent=`+${earned} 🪙`;if(sb&&user)sb.rpc("submit_snake_score",{p_score:score}).then(()=>loadProfile()).then(updateUI);modal("gameOverModal",true)}
 
-  let local = JSON.parse(localStorage.getItem("snakeArenaLocal") || "{}");
-  local.highScore = Number(local.highScore || 0);
-  local.games = Number(local.games || 0);
-  local.coins = Number(local.coins ?? 100);
-  local.owned = Array.isArray(local.owned) ? local.owned : ["classic"];
-  local.skin = local.skin || "classic";
-  local.settings = Object.assign({difficulty:"normal",grid:true,sound:true}, local.settings || {});
-  local.birdyHighScore = Number(local.birdyHighScore || 0);
-  local.birdyGames = Number(local.birdyGames || 0);
-  let profile = null, user = null, activeRankGame="snake";
-  let snake = [], food = null, bonus = null, dir={x:1,y:0}, next={x:1,y:0}, score=0, timer=null, paused=false, running=false, touchX=0, touchY=0;
+// Birdy
+const birdyCanvas=$("birdyCanvas"),birdyCtx=birdyCanvas.getContext("2d");let birdy={x:155,y:380,vy:0,score:0,pipes:[],running:false,paused:false,started:false,raf:null,last:0,nextPipe:0};
+function resetBirdy(){cancelAnimationFrame(birdy.raf);birdy={x:155,y:380,vy:0,score:0,pipes:[],running:true,paused:false,started:false,raf:null,last:0,nextPipe:0};$("birdyScore").textContent=0;$("birdyStartHint").style.display="grid";drawBirdy()}
+function startBirdy(){modal("birdyOverModal",false);show("birdy");resetBirdy()}
+function flap(){if(!birdy.running||birdy.paused)return;if(!birdy.started){birdy.started=true;birdy.last=performance.now();$("birdyStartHint").style.display="none";birdy.raf=requestAnimationFrame(birdyLoop)}birdy.vy=-520;beep(650)}
+function birdyLoop(now){if(!birdy.running)return;if(birdy.paused){birdy.raf=requestAnimationFrame(birdyLoop);return}let dt=Math.min(.033,(now-birdy.last)/1000||0);birdy.last=now;birdy.vy+=1250*dt;birdy.y+=birdy.vy*dt;birdy.nextPipe-=dt;if(birdy.nextPipe<=0){let gap=190+Math.random()*35,gapY=170+Math.random()*(420-gap);birdy.pipes.push({x:620,w:92,gapY,gap,scored:false});birdy.nextPipe=1.65}birdy.pipes.forEach(p=>p.x-=190*dt);birdy.pipes=birdy.pipes.filter(p=>p.x+p.w>-10);for(const p of birdy.pipes){if(!p.scored&&p.x+p.w<birdy.x-20){p.scored=true;birdy.score++;$("birdyScore").textContent=birdy.score;beep(760)}if(birdy.x+20>p.x&&birdy.x-20<p.x+p.w&&(birdy.y-18<p.gapY||birdy.y+18>p.gapY+p.gap)){endBirdy();return}}if(birdy.y<18||birdy.y>742){endBirdy();return}drawBirdy();birdy.raf=requestAnimationFrame(birdyLoop)}
+function drawBirdy(){let c=birdyCtx;c.clearRect(0,0,600,760);let g=c.createLinearGradient(0,0,0,760);g.addColorStop(0,"#65c4ff");g.addColorStop(1,"#d9f5ff");c.fillStyle=g;c.fillRect(0,0,600,760);c.fillStyle="rgba(255,255,255,.45)";for(let i=0;i<5;i++){c.beginPath();c.arc((i*150+80)%620,100+(i%3)*90,45,0,Math.PI*2);c.fill()}birdy.pipes.forEach(p=>{c.fillStyle="#4caf50";c.fillRect(p.x,0,p.w,p.gapY);c.fillRect(p.x,p.gapY+p.gap,p.w,760-(p.gapY+p.gap));c.fillStyle="#2f8b3c";c.fillRect(p.x-8,p.gapY-20,p.w+16,20);c.fillRect(p.x-8,p.gapY+p.gap,p.w+16,20)});c.fillStyle="#ffd54f";c.beginPath();c.arc(birdy.x,birdy.y,24,0,Math.PI*2);c.fill();c.fillStyle="#ff9f43";c.beginPath();c.moveTo(birdy.x+22,birdy.y);c.lineTo(birdy.x+45,birdy.y+7);c.lineTo(birdy.x+22,birdy.y+14);c.fill();c.fillStyle="#fff";c.beginPath();c.arc(birdy.x+8,birdy.y-7,7,0,Math.PI*2);c.fill();c.fillStyle="#253140";c.beginPath();c.arc(birdy.x+10,birdy.y-7,3,0,Math.PI*2);c.fill();c.fillStyle="#fff";c.font="900 52px system-ui";c.textAlign="center";c.fillText(birdy.score,300,78)}
+async function endBirdy(){if(!birdy.running)return;birdy.running=false;cancelAnimationFrame(birdy.raf);local.birdyGames++;const earned=birdy.score*5;local.coins+=earned;if(birdy.score>local.birdyHighScore)local.birdyHighScore=birdy.score;save();updateUI();$("birdyFinalScore").textContent=birdy.score;$("birdyResultEarned").textContent=`+${earned} 🪙`;if(sb&&user){await sb.rpc("submit_birdy_score",{p_score:birdy.score});await loadProfile();updateUI()}modal("birdyOverModal",true)}
 
-  function saveLocal(){ localStorage.setItem("snakeArenaLocal", JSON.stringify(local)); }
-  function updateUI(){
-    $("homeBest").textContent=local.highScore; $("homeCoins").textContent=local.coins; $("homeGames").textContent=local.games;
-    $("gameBest").textContent=local.highScore; $("gameCoins").textContent=local.coins; $("shopCoins").textContent=local.coins;
-    $("profileBest").textContent=profile?.high_score ?? local.highScore;
-    $("profileCoins").textContent=profile?.coins ?? local.coins;
-    $("profileGames").textContent=profile?.games_played ?? local.games;
-    $("birdyBest").textContent=local.birdyHighScore; $("birdyCoins").textContent=local.coins;
-    const s=skins.find(x=>x.id===local.skin)||skins[0]; $("profileSkin").textContent=s.name; $("activeSkinName").textContent=s.name;
-    $("profileLoggedOut").classList.toggle("hidden",!!user); $("profileLoggedIn").classList.toggle("hidden",!user);
-    if(user){$("profileUsername").textContent=profile?.username || user.email?.split("@")[0] || "Player";$("profileEmail").textContent=user.email||"";$("profileAvatar").textContent=profile?.avatar_url || "🐍";}
-  }
-  function navigate(name){
-    pages.forEach(p=>{const page=$(p+"Page"); if(page) page.classList.toggle("active",p===name)});
-    document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===name));
-    if(name==="home") updateUI(); if(name==="shop") renderShop(); if(name==="leaderboard") loadLeaderboard(); if(name==="profile") updateUI();
-  }
-  function showModal(id,show){$(id).classList.toggle("show",show)}
+// Archery
+const ac=$("archeryCanvas"),ax=ac.getContext("2d");let archery={score:0,arrows:10,level:1,targetX:300,targetY:330,r:54,dir:1,speed:80,running:false,paused:false,raf:null,last:0};
+function startArchery(){modal("archeryOverModal",false);show("archery");archery={score:0,arrows:10,level:1,targetX:300,targetY:330,r:54,dir:1,speed:80,running:true,paused:false,raf:null,last:performance.now()};$("archeryScore").textContent=0;$("archeryArrows").textContent=10;$("archeryHint").style.display="grid";drawArchery();archery.raf=requestAnimationFrame(archeryLoop)}
+function drawArchery(){ax.clearRect(0,0,600,720);let g=ax.createLinearGradient(0,0,0,720);g.addColorStop(0,"#c6efff");g.addColorStop(1,"#f8fdff");ax.fillStyle=g;ax.fillRect(0,0,600,720);ax.fillStyle="#8cc67a";ax.fillRect(0,580,600,140);ax.fillStyle="#6d994f";ax.fillRect(0,580,600,8);const t=archery.r;for(const [rr,col] of [[t,"#fff"],[t*.75,"#111c2a"],[t*.52,"#ef5350"],[t*.28,"#ffd54f"]]){ax.fillStyle=col;ax.beginPath();ax.arc(archery.targetX,archery.targetY,rr,0,Math.PI*2);ax.fill()}ax.strokeStyle="#744c2b";ax.lineWidth=8;ax.beginPath();ax.moveTo(0,650);ax.lineTo(600,650);ax.stroke();ax.fillStyle="#36454f";ax.font="800 22px system-ui";ax.fillText("Level "+archery.level,20,38)}
+function archeryLoop(now){if(!archery.running)return;if(archery.paused){archery.raf=requestAnimationFrame(archeryLoop);return}const dt=Math.min(.033,(now-archery.last)/1000||0);archery.last=now;archery.targetX+=archery.dir*archery.speed*dt;const min=archery.r+40,max=600-archery.r-40;if(archery.targetX<min){archery.targetX=min;archery.dir=1}if(archery.targetX>max){archery.targetX=max;archery.dir=-1}drawArchery();archery.raf=requestAnimationFrame(archeryLoop)}
+function shootArchery(e){if(!archery.running||archery.paused||archery.arrows<=0)return;const r=ac.getBoundingClientRect(),x=(e.clientX-r.left)*(ac.width/r.width),y=(e.clientY-r.top)*(ac.height/r.height);const d=Math.hypot(x-archery.targetX,y-archery.targetY);let pts=d<archery.r*.28?50:d<archery.r*.52?30:d<archery.r*.76?15:d<archery.r?5:0;archery.score+=pts;archery.arrows--;$("archeryScore").textContent=archery.score;$("archeryArrows").textContent=archery.arrows;$("archeryMessage").textContent=pts?`+${pts} points`:'Miss!';beep(pts?520:180);if(pts>=30&&archery.level<8){archery.level++;archery.r=Math.max(32,54-(archery.level-1)*3);archery.speed+=15;archery.targetY=250+Math.random()*220}if(archery.arrows<=0)endArchery()}
+async function endArchery(){if(!archery.running)return;archery.running=false;cancelAnimationFrame(archery.raf);local.archeryGames++;const earned=Math.floor(archery.score/10);if(archery.score>local.archeryHighScore)local.archeryHighScore=archery.score;if(!(sb&&user))local.coins+=earned;save();updateUI();$("archeryFinalScore").textContent=archery.score;$("archeryResultEarned").textContent=`+${earned} 🪙`;if(sb&&user){await sb.rpc("submit_archery_score",{p_score:archery.score});await loadProfile();updateUI()}modal("archeryOverModal",true)}
 
-  async function loadSession(){
-    if(!sb){updateUI();return;}
-    const {data:{session}}=await sb.auth.getSession(); user=session?.user||null;
-    if(user) await loadProfile();
-    updateUI(); loadLeaderboard();
-  }
-  async function loadProfile(){
-    if(!sb||!user)return;
-    const {data,error}=await sb.from("profiles").select("*").eq("id",user.id).maybeSingle();
-    if(!error && data){profile=data; local.coins=data.coins; local.highScore=Math.max(local.highScore,data.high_score||0); local.games=Math.max(local.games,data.games_played||0); saveLocal();}
-    else if(!data){
-      const username=user.user_metadata?.username || user.email?.split("@")[0] || "Player";
-      const {data:created}=await sb.from("profiles").insert({id:user.id,username,coins:100,high_score:0,games_played:0,avatar_url:"🐍"}).select().single();
-      if(created) profile=created;
-    }
-  }
+// Tower
+const tc=$("towerCanvas"),tx=tc.getContext("2d");let tower={blocks:[],current:null,score:0,best:0,level:1,running:false,paused:false,raf:null,last:0};
+function startTower(){modal("towerOverModal",false);show("tower");tower={blocks:[],current:{x:40,y:620,w:220,h:32,dir:1,speed:170},score:0,best:local.towerHighScore,level:1,running:true,paused:false,raf:null,last:performance.now()};$("towerScore").textContent=0;$("towerLevel").textContent=1;$("towerHint").style.display="grid";drawTower();tower.raf=requestAnimationFrame(towerLoop)}
+function drawTower(){tx.clearRect(0,0,600,720);let g=tx.createLinearGradient(0,0,0,720);g.addColorStop(0,"#dce9ff");g.addColorStop(1,"#fff8e8");tx.fillStyle=g;tx.fillRect(0,0,600,720);tx.fillStyle="#e8c975";tx.fillRect(0,680,600,40);tower.blocks.slice(-18).forEach((b,i)=>{tx.fillStyle=b.color;tx.fillRect(b.x,b.y,b.w,b.h)});if(tower.current){tx.fillStyle="#4d8ee8";tx.fillRect(tower.current.x,tower.current.y,tower.current.w,tower.current.h)}tx.fillStyle="#344052";tx.font="800 22px system-ui";tx.fillText("Height "+tower.score,20,36)}
+function towerLoop(now){if(!tower.running)return;if(tower.paused){tower.raf=requestAnimationFrame(towerLoop);return}let dt=Math.min(.033,(now-tower.last)/1000||0);tower.last=now;if(tower.current){tower.current.x+=tower.current.dir*tower.current.speed*dt;const max=600-tower.current.w;if(tower.current.x<0){tower.current.x=0;tower.current.dir=1}if(tower.current.x>max){tower.current.x=max;tower.current.dir=-1}}drawTower();tower.raf=requestAnimationFrame(towerLoop)}
+function dropTower(){if(!tower.running||tower.paused||!tower.current)return;$("towerHint").style.display="none";const prev=tower.blocks[tower.blocks.length-1];if(!prev){tower.blocks.push({...tower.current,color:"#596fa8"});tower.score=1}else{const overlap=Math.min(tower.current.x+tower.current.w,prev.x+prev.w)-Math.max(tower.current.x,prev.x);if(overlap<=0){endTower();return}const nx=Math.max(tower.current.x,prev.x);tower.blocks.push({x:nx,y:prev.y-34,w:overlap,h:32,color:`hsl(${(tower.score*35)%360} 65% 58%)`});tower.score++}tower.level=Math.floor(tower.score/5)+1;$("towerScore").textContent=tower.score;$("towerLevel").textContent=tower.level;const nb=tower.blocks[tower.blocks.length-1];tower.current={x:tower.current.x,y:nb.y-34,w:nb.w,h:32,dir:(tower.score%2?1:-1),speed:170+tower.score*8};if(tower.current.y<140){tower.blocks.forEach(b=>b.y+=80);tower.current.y+=80}}
+async function endTower(){if(!tower.running)return;tower.running=false;cancelAnimationFrame(tower.raf);local.towerGames++;const earned=tower.score*2;if(tower.score>local.towerHighScore)local.towerHighScore=tower.score;if(!(sb&&user))local.coins+=earned;save();updateUI();$("towerFinalScore").textContent=tower.score;$("towerResultEarned").textContent=`+${earned} 🪙`;if(sb&&user){await sb.rpc("submit_tower_score",{p_score:tower.score});await loadProfile();updateUI()}modal("towerOverModal",true)}
 
-  async function saveProfile(){
-    const username=$("editUsername").value.trim() || "Player";
-    const avatar=$("editAvatar").value.trim() || "🐍";
-    if(!sb||!user){$("editStatus").textContent="Login is required for online profile saving.";return;}
-    const {data,error}=await sb.from("profiles").update({username,avatar_url:avatar}).eq("id",user.id).select().single();
-    if(error){$("editStatus").textContent=error.message;return;}
-    profile=data; $("editStatus").textContent="Saved."; updateUI(); setTimeout(()=>showModal("editModal",false),500);
-  }
+// Reaction time
+let reaction={state:"idle",start:0,timer:null,raf:null};function startReaction(){modal("reactionResultModal",false);show("reaction");reaction={state:"waiting",start:0,timer:null,raf:null};$("reactionArea").className="reaction-area waiting";$("reactionBig").textContent="WAIT";$("reactionSmall").textContent="Get ready…";$("reactionMessage").textContent="Tap only after GO appears.";clearTimeout(reaction.timer);reaction.timer=setTimeout(()=>{if(reaction.state!=="waiting")return;reaction.state="ready";reaction.start=performance.now();$("reactionArea").className="reaction-area ready";$("reactionBig").textContent="GO!";$("reactionSmall").textContent="TAP NOW";beep(880)},900+Math.random()*2600)}
+async function reactionTap(){if($("reactionPage").classList.contains("active")===false)return;if(reaction.state==="idle"){startReaction();return}if(reaction.state==="waiting"){clearTimeout(reaction.timer);reaction.state="tooSoon";$("reactionArea").className="reaction-area too-soon";$("reactionBig").textContent="TOO EARLY";$("reactionSmall").textContent="Wait for GO before tapping.";$("reactionMessage").textContent="Restart and try again.";beep(160);return}if(reaction.state==="ready"){const ms=Math.round(performance.now()-reaction.start);reaction.state="result";$("reactionArea").className="reaction-area result";$("reactionBig").textContent=ms+" ms";$("reactionSmall").textContent=ms<250?"Incredible reaction!":ms<400?"Great reaction!":"Keep practicing!";$("reactionLast").textContent=ms+" ms";const better=local.reactionBest==null||ms<local.reactionBest;if(better)local.reactionBest=ms;local.reactionGames++;const earned=ms<300?10:ms<500?5:3;if(!(sb&&user))local.coins+=earned;save();updateUI();$("reactionFinal").textContent=ms+" ms";$("reactionResultEarned").textContent=`+${earned} 🪙`;if(sb&&user){await sb.rpc("submit_reaction_score",{p_ms:ms});await loadProfile();updateUI()}setTimeout(()=>modal("reactionResultModal",true),300)}}
 
-  async function submitScoreOnline(finalScore, earned){
-    if(!sb||!user)return;
-    // For this prototype, the database function handles score + reward atomically.
-    const {error}=await sb.rpc("submit_snake_score",{p_score:finalScore});
-    if(error) console.warn(error.message);
-    await loadProfile(); updateUI();
-  }
+async function loadLeaderboard(){const list=$("leaderboardList");if(!list)return;list.innerHTML='<div class="rank-row"><span>…</span><span>Loading…</span><strong>—</strong></div>';if(!sb){$("rankNote").textContent="Offline mode: connect Supabase for global rankings.";list.innerHTML='<div class="rank-row"><span>—</span><span>Connect Supabase for online ranks</span><strong>—</strong></div>';return}const table={snake:"leaderboard",birdy:"birdy_leaderboard",archery:"archery_leaderboard",tower:"tower_leaderboard",reaction:"reaction_leaderboard"}[activeRankGame];$("rankNote").textContent=user?`Your ${activeRankGame} scores are submitted after each run.`:"Sign in to submit scores to the global leaderboard.";$("rankScoreLabel").textContent=activeRankGame==="reaction"?"TIME":"SCORE";const q=sb.from(table).select("score,username,avatar_url").order("score",{ascending:activeRankGame==="reaction"}).limit(50);const {data,error}=await q;if(error){list.innerHTML=`<div class="rank-row"><span>!</span><span>${esc(error.message.includes("does not exist")?"Run the latest supabase-schema.sql first.":error.message)}</span><strong>—</strong></div>`;return}if(!data?.length){list.innerHTML='<div class="rank-row"><span>—</span><span>No scores yet</span><strong>—</strong></div>';return}list.innerHTML=data.map((r,i)=>`<div class="rank-row"><span>${i<3?["🥇","🥈","🥉"][i]:i+1}</span><span class="rank-player"><span class="rank-avatar">${esc(r.avatar_url||"🎮")}</span>${esc(r.username||"Player")}</span><strong class="rank-score">${r.score}${activeRankGame==="reaction"?" ms":""}</strong></div>`).join("")}
+function beep(freq){if(!local.settings.sound)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=freq;g.gain.setValueAtTime(.05,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.12);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.13)}catch(e){}}
 
-  async function loadLeaderboard(){
-    const list=$("leaderboardList"); if(!list)return;
-    list.innerHTML='<div class="rank-row"><span>…</span><span>Loading…</span><strong>—</strong></div>';
-    const tableName=activeRankGame==="birdy"?"birdy_leaderboard":"leaderboard";
-    if(!sb){ $("rankNote").textContent="Offline mode: connect Supabase to use global rankings."; list.innerHTML='<div class="rank-row"><span>—</span><span>Connect Supabase for online ranks</span><strong>—</strong></div>'; return; }
-    $("rankNote").textContent=user?`Your ${activeRankGame==="birdy"?"Birdy Bird":"Snake"} scores are submitted after each run.`:"Sign in to submit scores to the global leaderboard.";
-    const {data,error}=await sb.from(tableName).select("score,username,avatar_url").order("score",{ascending:false}).limit(50);
-    if(error){list.innerHTML=`<div class="rank-row"><span>!</span><span>${escapeHtml(error.message.includes("does not exist")?"Run the Birdy Bird SQL migration first.":error.message)}</span><strong>—</strong></div>`;return;}
-    if(!data.length){list.innerHTML='<div class="rank-row"><span>—</span><span>No scores yet</span><strong>—</strong></div>';return;}
-    list.innerHTML=data.map((r,i)=>`<div class="rank-row"><span>${i<3?["🥇","🥈","🥉"][i]:i+1}</span><span class="rank-player"><span class="rank-avatar">${escapeHtml(r.avatar_url||"🐍")}</span>${escapeHtml(r.username||"Player")}</span><strong class="rank-score">${r.score}</strong></div>`).join("");
-  }
+// Navigation/events
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>show(b.dataset.page));$("playBtn").onclick=startSnake;$("playBirdyBtn").onclick=startBirdy;$("playArcheryBtn").onclick=startArchery;$("playTowerBtn").onclick=startTower;$("playReactionBtn").onclick=()=>startReaction();$("homeSettingsBtn").onclick=()=>show("settings");
+$("backGameBtn").onclick=()=>{clearInterval(timer);running=false;show("home")};$("backBirdyBtn").onclick=()=>{birdy.running=false;cancelAnimationFrame(birdy.raf);show("home")};$("backArcheryBtn").onclick=()=>{archery.running=false;cancelAnimationFrame(archery.raf);show("home")};$("backTowerBtn").onclick=()=>{tower.running=false;cancelAnimationFrame(tower.raf);show("home")};$("backReactionBtn").onclick=()=>{clearTimeout(reaction.timer);show("home")};
+$("pauseBtn").onclick=()=>{if(!running)return;paused=!paused;$("pauseBtn").textContent=paused?"Resume":"Pause"};$("birdyPauseBtn").onclick=()=>{if(!birdy.running)return;birdy.paused=!birdy.paused;$("birdyPauseBtn").textContent=birdy.paused?"Resume":"Pause"};$("archeryPauseBtn").onclick=()=>{if(!archery.running)return;archery.paused=!archery.paused;$("archeryPauseBtn").textContent=archery.paused?"Resume":"Pause"};$("towerPauseBtn").onclick=()=>{if(!tower.running)return;tower.paused=!tower.paused;$("towerPauseBtn").textContent=tower.paused?"Resume":"Pause"};
+$("restartBtn").onclick=startSnake;$("birdyRestartBtn").onclick=startBirdy;$("archeryRestartBtn").onclick=startArchery;$("towerRestartBtn").onclick=startTower;$("reactionRestartBtn").onclick=startReaction;
+$("playAgainBtn").onclick=startSnake;$("resultHomeBtn").onclick=()=>{modal("gameOverModal",false);show("home")};$("birdyPlayAgainBtn").onclick=startBirdy;$("birdyResultHomeBtn").onclick=()=>{modal("birdyOverModal",false);show("home")};$("archeryPlayAgainBtn").onclick=startArchery;$("archeryResultHomeBtn").onclick=()=>{modal("archeryOverModal",false);show("home")};$("towerPlayAgainBtn").onclick=startTower;$("towerResultHomeBtn").onclick=()=>{modal("towerOverModal",false);show("home")};$("reactionPlayAgainBtn").onclick=startReaction;$("reactionResultHomeBtn").onclick=()=>{modal("reactionResultModal",false);show("home")};
+document.querySelectorAll("[data-dir]").forEach(b=>b.onclick=()=>setDir(b.dataset.dir));document.addEventListener("keydown",e=>{const k={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"}[e.key];if(k){e.preventDefault();setDir(k)}if(e.code==="Space"){if($("birdyPage").classList.contains("active")){e.preventDefault();flap()}else if($("towerPage").classList.contains("active")){e.preventDefault();dropTower()}}});
+canvas.addEventListener("touchstart",e=>{const t=e.changedTouches[0];touchX=t.clientX;touchY=t.clientY},{passive:true});canvas.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-touchX,dy=t.clientY-touchY;if(Math.max(Math.abs(dx),Math.abs(dy))<25)return;if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?"right":"left");else setDir(dy>0?"down":"up")},{passive:true});
+birdyCanvas.addEventListener("pointerdown",e=>{e.preventDefault();flap()});ac.addEventListener("pointerdown",e=>{e.preventDefault();shootArchery(e)});tc.addEventListener("pointerdown",e=>{e.preventDefault();dropTower()});$("reactionArea").addEventListener("pointerdown",e=>{e.preventDefault();reactionTap()});
 
-  function renderShop(){
-    $("shopCoins").textContent=local.coins;
-    $("shopGrid").innerHTML=skins.map(s=>{
-      const owned=local.owned.includes(s.id), selected=local.skin===s.id;
-      return `<div class="shop-item ${selected?"selected":""}"><div class="skin-preview" style="background:${s.bg}">${s.icon}</div><h3>${s.name}</h3><p>${s.price===0?"Free":`🪙 ${s.price} coins`}</p><button data-skin="${s.id}" class="${owned?"owned":"buy"}">${selected?"✓ Equipped":owned?"Equip":`Buy • 🪙 ${s.price}`}</button></div>`;
-    }).join("");
-    $("shopGrid").querySelectorAll("[data-skin]").forEach(btn=>btn.onclick=()=>handleSkin(btn.dataset.skin));
-  }
-  function handleSkin(id){
-    const s=skins.find(x=>x.id===id); if(!s)return;
-    if(local.owned.includes(id)){local.skin=id;saveLocal();renderShop();updateUI();return;}
-    if(local.coins<s.price){alert("Not enough coins.");return;}
-    local.coins-=s.price; local.owned.push(id); local.skin=id; saveLocal(); renderShop(); updateUI();
-  }
+// Auth
+let signupMode=false;function authMode(s){signupMode=s;$("authTitle").textContent=s?"Create Account":"Login";$("authSubtitle").textContent=s?"Start your Snake Arena profile.":"Welcome back to Snake Arena.";$("usernameInput").classList.toggle("hidden",!s);$("authSubmit").textContent=s?"Sign Up":"Login";$("switchAuth").textContent=s?"I already have an account":"Create an account";$("authStatus").textContent=""}
+$("accountBtn").onclick=()=>{show("profile");if(!user)modal("authModal",true)};$("loginOpenBtn").onclick=()=>modal("authModal",true);$("closeAuth").onclick=()=>modal("authModal",false);$("switchAuth").onclick=()=>authMode(!signupMode);
+$("authForm").onsubmit=async e=>{e.preventDefault();if(!sb){$("authStatus").textContent="Add your Supabase URL and publishable key in config.js first.";return}$("authStatus").textContent="";const email=$("emailInput").value.trim(),password=$("passwordInput").value;let res;if(signupMode){const username=$("usernameInput").value.trim()||email.split("@")[0];res=await sb.auth.signUp({email,password,options:{data:{username},emailRedirectTo:location.origin+location.pathname}});if(!res.error&&res.data.user)$("authStatus").textContent=res.data.session?"Account created.":"Check your email to confirm your account."}else res=await sb.auth.signInWithPassword({email,password});if(res.error){$("authStatus").textContent=res.error.message;return}if(res.data?.session){user=res.data.user;await loadProfile();updateUI();modal("authModal",false);show("profile")}};
+$("logoutBtn").onclick=async()=>{if(sb)await sb.auth.signOut();user=null;profile=null;updateUI();show("home")};$("editProfileBtn").onclick=()=>{$("editUsername").value=profile?.username||"";$("editAvatar").value=profile?.avatar_url||"🐍";modal("editModal",true)};$("closeEdit").onclick=()=>modal("editModal",false);$("saveProfileBtn").onclick=async()=>{if(!sb||!user){$("editStatus").textContent="Login is required.";return}const {data,error}=await sb.from("profiles").update({username:$("editUsername").value.trim()||"Player",avatar_url:$("editAvatar").value.trim()||"🐍"}).eq("id",user.id).select().single();if(error){$("editStatus").textContent=error.message;return}profile=data;updateUI();modal("editModal",false)};
 
-  function randomCell(){
-    let p; do{p={x:Math.floor(Math.random()*CELLS),y:Math.floor(Math.random()*CELLS)}}while(snake.some(s=>s.x===p.x&&s.y===p.y)||(bonus&&bonus.x===p.x&&bonus.y===p.y)); return p;
-  }
-  const CELLS=30,SIZE=20,canvas=$("gameCanvas"),ctx=canvas.getContext("2d");
-  function draw(){
-    ctx.clearRect(0,0,600,600);ctx.fillStyle="#11151b";ctx.fillRect(0,0,600,600);
-    if(local.settings.grid){ctx.strokeStyle="rgba(105,130,140,.12)";for(let i=0;i<=600;i+=SIZE){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,600);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(600,i);ctx.stroke();}}
-    const skin=skins.find(x=>x.id===local.skin)||skins[0];
-    drawFood(food,"#ff4c4c",true); if(bonus) drawFood(bonus,"#ffd34d",true);
-    snake.forEach((p,i)=>{ctx.fillStyle=i===0?skin.head:skin.body;ctx.shadowColor=i===0?skin.head:skin.body;ctx.shadowBlur=5;ctx.fillRect(p.x*SIZE+2,p.y*SIZE+2,SIZE-4,SIZE-4);ctx.shadowBlur=0;});
-  }
-  function drawFood(p,color,glow){ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=glow?14:0;ctx.beginPath();ctx.arc(p.x*SIZE+10,p.y*SIZE+10,6.5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;}
-  function setDirection(name){
-    if(!running||paused)return; const m={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}}[name]; if(!m)return; if(m.x===-dir.x&&m.y===-dir.y)return; next=m;
-  }
-  function startGame(){
-    showModal("gameOverModal",false); navigate("game"); clearInterval(timer); running=true;paused=false;score=0;dir={x:1,y:0};next={x:1,y:0};snake=[{x:15,y:15},{x:14,y:15},{x:13,y:15},{x:12,y:15}];food=randomCell();bonus=null;$("score").textContent=0;$("pauseBtn").textContent="Pause";$("gameMessage").textContent="Swipe or use the buttons.";draw();
-    const speed={easy:150,normal:105,hard:72}[local.settings.difficulty];timer=setInterval(tick,speed);
-  }
-  function tick(){
-    if(!running||paused)return; dir=next; const h={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
-    if(h.x<0||h.y<0||h.x>=CELLS||h.y>=CELLS||snake.some(s=>s.x===h.x&&s.y===h.y)){endGame();return}
-    snake.unshift(h);let gained=0;
-    if(h.x===food.x&&h.y===food.y){gained=10;food=randomCell();if(Math.random()<0.25)bonus=randomCell();showFloat("+10")}
-    if(bonus&&h.x===bonus.x&&h.y===bonus.y){gained=30;bonus=null;showFloat("+30 BONUS")}
-    if(gained){score+=gained;$("score").textContent=score;beep(gained===30?720:520)}
-    else snake.pop(); draw();
-  }
-  function showFloat(text){$("comboText").textContent=text; setTimeout(()=>{$("comboText").textContent=""},500)}
-  function endGame(){
-    clearInterval(timer);running=false;local.games+=1;let earned=Math.floor(score/10);local.coins+=earned;if(score>local.highScore)local.highScore=score;saveLocal();updateUI();
-    $("finalScore").textContent=score;$("resultEarned").textContent=`+${earned} 🪙`;
-    submitScoreOnline(score,earned);
-    showModal("gameOverModal",true);
-  }
-  function beep(freq){if(!local.settings.sound)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=freq;g.gain.setValueAtTime(.06,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.12);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.13)}catch(e){}}
-  function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-
-  // Birdy Bird
-  const birdyCanvas=$("birdyCanvas"), birdyCtx=birdyCanvas.getContext("2d");
-  let birdy={x:155,y:380,vy:0,score:0,pipes:[],running:false,paused:false,started:false,raf:null,last:0,nextPipe:0};
-  function resetBirdy(){
-    cancelAnimationFrame(birdy.raf); birdy={x:155,y:380,vy:0,score:0,pipes:[],running:true,paused:false,started:false,raf:null,last:0,nextPipe:0};
-    $("birdyScore").textContent=0; $("birdyPauseBtn").textContent="Pause"; $("birdyMessage").textContent="Tap the screen to fly."; $("birdyStartHint").style.display="grid"; drawBirdy();
-  }
-  function startBirdy(){showModal("birdyOverModal",false);navigate("birdy");resetBirdy();}
-  function flap(){if(!birdy.running||birdy.paused)return; if(!birdy.started){birdy.started=true;birdy.last=performance.now();$("birdyStartHint").style.display="none";birdy.raf=requestAnimationFrame(birdyLoop);} birdy.vy=-520;beep(650);}
-  function birdyLoop(now){if(!birdy.running)return;if(birdy.paused){birdy.raf=requestAnimationFrame(birdyLoop);return;}let dt=Math.min(.033,(now-birdy.last)/1000||0);birdy.last=now;birdy.vy+=1250*dt;birdy.y+=birdy.vy*dt;birdy.nextPipe-=dt;if(birdy.nextPipe<=0){let gap=190+Math.random()*35;let gapY=170+Math.random()*(420-gap);birdy.pipes.push({x:620,w:92,gapY,gap,scored:false});birdy.nextPipe=1.65;}birdy.pipes.forEach(p=>p.x-=190*dt);birdy.pipes=birdy.pipes.filter(p=>p.x+p.w>-10);for(const p of birdy.pipes){if(!p.scored&&p.x+p.w<birdy.x-20){p.scored=true;birdy.score++;$("birdyScore").textContent=birdy.score;showBirdyFloat();beep(760);}if(birdy.x+20>p.x&&birdy.x-20<p.x+p.w&&(birdy.y-18<p.gapY||birdy.y+18>p.gapY+p.gap)){endBirdy();return;}}if(birdy.y<18||birdy.y>742){endBirdy();return;}drawBirdy();birdy.raf=requestAnimationFrame(birdyLoop);}
-  function drawBirdy(){let c=birdyCtx;c.clearRect(0,0,600,760);let g=c.createLinearGradient(0,0,0,760);g.addColorStop(0,"#65c4ff");g.addColorStop(1,"#d9f5ff");c.fillStyle=g;c.fillRect(0,0,600,760);c.fillStyle="rgba(255,255,255,.45)";for(let i=0;i<5;i++){c.beginPath();c.arc((i*150+80)%620,100+(i%3)*90,45,0,Math.PI*2);c.fill();}birdy.pipes.forEach(p=>{c.fillStyle="#4caf50";c.fillRect(p.x,0,p.w,p.gapY);c.fillRect(p.x,p.gapY+p.gap,p.w,760-(p.gapY+p.gap));c.fillStyle="#2f8b3c";c.fillRect(p.x-8,p.gapY-20,p.w+16,20);c.fillRect(p.x-8,p.gapY+p.gap,p.w+16,20);});c.fillStyle="#ffd54f";c.beginPath();c.arc(birdy.x,birdy.y,24,0,Math.PI*2);c.fill();c.fillStyle="#ff9f43";c.beginPath();c.moveTo(birdy.x+22,birdy.y);c.lineTo(birdy.x+45,birdy.y+7);c.lineTo(birdy.x+22,birdy.y+14);c.fill();c.fillStyle="#fff";c.beginPath();c.arc(birdy.x+8,birdy.y-7,7,0,Math.PI*2);c.fill();c.fillStyle="#253140";c.beginPath();c.arc(birdy.x+10,birdy.y-7,3,0,Math.PI*2);c.fill();c.fillStyle="#fff";c.font="900 52px system-ui";c.textAlign="center";c.fillText(birdy.score,300,78);}
-  function showBirdyFloat(){ $("birdyMessage").textContent=`Great! ${birdy.score} pipe${birdy.score===1?"":"s"} cleared.`; }
-  async function submitBirdyScore(score){if(!sb||!user)return;const {error}=await sb.rpc("submit_birdy_score",{p_score:score});if(error)console.warn(error.message);await loadProfile();updateUI();}
-  function endBirdy(){if(!birdy.running)return;birdy.running=false;cancelAnimationFrame(birdy.raf);local.birdyGames++;let earned=Math.max(0,birdy.score*5);local.coins+=earned;if(birdy.score>local.birdyHighScore)local.birdyHighScore=birdy.score;saveLocal();updateUI();$("birdyFinalScore").textContent=birdy.score;$("birdyResultEarned").textContent=`+${earned} 🪙`;submitBirdyScore(birdy.score);showModal("birdyOverModal",true);}
-
-  // Navigation
-  document.querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>navigate(btn.dataset.page));
-  $("playBtn").onclick=startGame; $("playBirdyBtn").onclick=startBirdy; $("backGameBtn").onclick=()=>{clearInterval(timer);running=false;navigate("home")}; $("backBirdyBtn").onclick=()=>{birdy.running=false;cancelAnimationFrame(birdy.raf);navigate("home")};
-  $("pauseBtn").onclick=()=>{if(!running)return;paused=!paused;$("pauseBtn").textContent=paused?"Resume":"Pause";$("gameMessage").textContent=paused?"Game Paused":"Swipe or use the buttons."};
-  $("restartBtn").onclick=startGame; $("birdyRestartBtn").onclick=startBirdy; $("birdyPlayAgainBtn").onclick=startBirdy; $("birdyResultHomeBtn").onclick=()=>{showModal("birdyOverModal",false);navigate("home")}; $("birdyPauseBtn").onclick=()=>{if(!birdy.running)return;birdy.paused=!birdy.paused;$("birdyPauseBtn").textContent=birdy.paused?"Resume":"Pause";$("birdyMessage").textContent=birdy.paused?"Flight Paused":"Tap to fly."};$("playAgainBtn").onclick=startGame;$("resultHomeBtn").onclick=()=>{showModal("gameOverModal",false);navigate("home")};
-  $("homeSettingsBtn").onclick=()=>navigate("settings");$("refreshRanks").onclick=loadLeaderboard; document.querySelectorAll("[data-rank-game]").forEach(b=>b.onclick=()=>{activeRankGame=b.dataset.rankGame;document.querySelectorAll("[data-rank-game]").forEach(x=>x.classList.toggle("active",x===b));loadLeaderboard();});
-  document.querySelectorAll("[data-dir]").forEach(b=>b.onclick=()=>setDirection(b.dataset.dir));
-  document.addEventListener("keydown",e=>{const k={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"}[e.key];if(k){e.preventDefault();setDirection(k)}if(e.key===" "){e.preventDefault();$("pauseBtn").click()}});
-  canvas.addEventListener("touchstart",e=>{const t=e.changedTouches[0];touchX=t.clientX;touchY=t.clientY},{passive:true});
-  canvas.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-touchX,dy=t.clientY-touchY;if(Math.max(Math.abs(dx),Math.abs(dy))<25)return;if(Math.abs(dx)>Math.abs(dy))setDirection(dx>0?"right":"left");else setDirection(dy>0?"down":"up")},{passive:true});
-  birdyCanvas.addEventListener("pointerdown",e=>{e.preventDefault();flap();});
-  document.addEventListener("keydown",e=>{if(e.code==="Space"&&$("birdyPage").classList.contains("active")){e.preventDefault();flap();}});
-
-
-  // Auth
-  let signupMode=false;
-  function setAuthMode(signup){signupMode=signup;$("authTitle").textContent=signup?"Create Account":"Login";$("authSubtitle").textContent=signup?"Start your Snake Arena profile.":"Welcome back to Snake Arena.";$("usernameInput").classList.toggle("hidden",!signup);$("authSubmit").textContent=signup?"Sign Up":"Login";$("switchAuth").textContent=signup?"I already have an account":"Create an account";$("authStatus").textContent=""}
-  $("accountBtn").onclick=()=>{navigate("profile"); if(!user)showModal("authModal",true)};
-  $("loginOpenBtn").onclick=()=>showModal("authModal",true);$("closeAuth").onclick=()=>showModal("authModal",false);
-  $("switchAuth").onclick=()=>setAuthMode(!signupMode);
-  $("authForm").onsubmit=async e=>{
-    e.preventDefault();$("authStatus").textContent="";
-    if(!sb){$("authStatus").textContent="Add your Supabase URL and publishable key in config.js first.";return}
-    const email=$("emailInput").value.trim(),password=$("passwordInput").value; let res;
-    if(signupMode){const username=$("usernameInput").value.trim()||email.split("@")[0];res=await sb.auth.signUp({email,password,options:{data:{username},emailRedirectTo:location.origin+location.pathname}}); if(!res.error&&res.data.user) $("authStatus").textContent=res.data.session?"Account created.":"Check your email to confirm your account."}
-    else res=await sb.auth.signInWithPassword({email,password});
-    if(res.error){$("authStatus").textContent=res.error.message;return}
-    if(res.data?.session){user=res.data.user;await loadProfile();updateUI();showModal("authModal",false);navigate("profile");loadLeaderboard()}
-  };
-  $("logoutBtn").onclick=async()=>{if(sb)await sb.auth.signOut();user=null;profile=null;updateUI();navigate("home")};
-  $("editProfileBtn").onclick=()=>{ $("editUsername").value=profile?.username||"";$("editAvatar").value=profile?.avatar_url||"🐍";showModal("editModal",true)};
-  $("closeEdit").onclick=()=>showModal("editModal",false);$("saveProfileBtn").onclick=saveProfile;
-
-  // Settings
-  $("difficulty").value=local.settings.difficulty;$("gridToggle").checked=local.settings.grid;$("soundToggle").checked=local.settings.sound;
-  $("difficulty").onchange=e=>{local.settings.difficulty=e.target.value;saveLocal()};$("gridToggle").onchange=e=>{local.settings.grid=e.target.checked;saveLocal();draw()};$("soundToggle").onchange=e=>{local.settings.sound=e.target.checked;saveLocal()};
-  $("resetLocalBtn").onclick=()=>{if(confirm("Reset local high score, coins, skins and settings?")){localStorage.removeItem("snakeArenaLocal");location.reload()}};
-  if(sb)sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null; if(user)loadProfile().then(updateUI); else {profile=null;updateUI();}});
-  setAuthMode(false); updateUI(); loadSession();
+// Settings/ranks
+document.querySelectorAll("[data-rank-game]").forEach(b=>b.onclick=()=>{activeRankGame=b.dataset.rankGame;document.querySelectorAll("[data-rank-game]").forEach(x=>x.classList.toggle("active",x===b));loadLeaderboard()});$("refreshRanks").onclick=loadLeaderboard;$("difficulty").value=local.settings.difficulty;$("gridToggle").checked=local.settings.grid;$("soundToggle").checked=local.settings.sound;$("difficulty").onchange=e=>{local.settings.difficulty=e.target.value;save()};$("gridToggle").onchange=e=>{local.settings.grid=e.target.checked;save();drawSnake()};$("soundToggle").onchange=e=>{local.settings.sound=e.target.checked;save()};$("resetLocalBtn").onclick=()=>{if(confirm("Reset local high scores, coins, skins and settings?")){localStorage.removeItem("snakeArenaLocal");location.reload()}};
+if(sb)sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(user)loadProfile().then(updateUI);else{profile=null;updateUI()}});authMode(false);updateUI();loadSession();
 });
