@@ -69,3 +69,10 @@ The shop is intentionally not connected to real money yet. Real INR purchases sh
 ## 6. Important security note
 
 The frontend is never trusted. The prototype submits scores to a server function, but a future production version should add stronger anti-cheat/rate-limiting before treating scores or coin rewards as economically valuable.
+
+
+## Birdy Bird update
+This version adds Birdy Bird with mobile tap controls, local best score, shared coins, and a separate global Birdy leaderboard.
+
+### Supabase
+Open Supabase → SQL Editor and run the updated `supabase-schema.sql` file once. The Birdy migration at the bottom creates `birdy_leaderboard` and `submit_birdy_score`.
