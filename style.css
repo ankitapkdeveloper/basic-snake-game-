@@ -1,22 +1,32 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{--bg:#f2f4f7;--card:#fff;--text:#1f2937;--muted:#6b7280;--green:#2e8b57;--border:#e5e7eb;--danger:#dc2626}
-body{margin:0;min-height:100vh;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);display:grid;place-items:center;padding:16px}
-.app{width:min(100%,480px)} .screen{display:none;background:#fff;border-radius:22px;padding:22px;box-shadow:0 10px 35px rgba(0,0,0,.12)}
-.screen.active{display:block}.hero{text-align:center;padding:20px 0 16px}.snake-logo{width:82px;height:82px;margin:auto;display:grid;place-items:center;border-radius:50%;background:#eaf7ef;font-size:42px}
-h1{font-size:32px;margin:14px 0 6px}.hero p{margin:0;color:var(--muted)}
-.stats-card,.score-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}.stats-card>div,.score-card,.setting-item{padding:16px;border:1px solid var(--border);border-radius:16px;background:#fafafa}
-.stats-card span,.score-card span{display:block;color:var(--muted);font-size:13px;margin-bottom:7px}.stats-card strong{font-size:26px}
-.menu-buttons,.settings-list{display:grid;gap:12px}button,select{font:inherit}button{cursor:pointer;border:none;border-radius:13px;min-height:50px;font-weight:700}
-.primary{background:var(--green);color:#fff}.secondary{background:#eef1f4;color:var(--text);border:1px solid var(--border)}
-.game-header,.simple-header{display:grid;grid-template-columns:52px 1fr 80px;align-items:center;margin-bottom:16px}.simple-header{grid-template-columns:52px 1fr 52px}
-.game-header h2,.simple-header h2{text-align:center;margin:0;font-size:20px}.icon-btn{min-height:44px;width:44px;background:#eef1f4;font-size:24px}.small-btn{min-height:40px;background:#222;color:#fff;font-size:12px}
-.score-row{margin:0 0 12px}.score-card strong{font-size:22px}canvas{width:100%;height:auto;aspect-ratio:1;display:block;background:#101214;border-radius:16px;touch-action:none}
-.game-message{text-align:center;min-height:22px;color:var(--muted);font-size:13px;margin:13px 0}.controls{width:210px;margin:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.control{background:#edf0f2;min-height:54px;font-size:22px}.up{grid-column:2}.left{grid-column:1}.down{grid-column:2}.right{grid-column:3;grid-row:2}.full{width:100%;margin-top:16px}
-.setting-item{display:flex;align-items:center;justify-content:space-between;gap:15px}.setting-item strong,.setting-item span{display:block}.setting-item span{margin-top:4px;font-size:13px;color:var(--muted)}
-select{padding:9px;border:1px solid var(--border);border-radius:10px}.danger{background:#fee2e2;color:var(--danger);padding:8px 12px;min-height:42px}.settings-note{text-align:center;color:var(--muted);font-size:13px;margin-top:20px}
-.switch{position:relative;width:50px;height:28px}.switch input{display:none}.switch span{position:absolute;inset:0;margin:0;background:#d1d5db;border-radius:20px}.switch span:after{content:"";width:22px;height:22px;position:absolute;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
-.switch input:checked+span{background:var(--green)}.switch input:checked+span:after{transform:translateX(22px)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.58);display:grid;place-items:center;padding:20px;z-index:10}.modal.hidden{display:none}.modal-card{width:min(100%,380px);background:#fff;border-radius:22px;padding:28px;text-align:center}
-.gameover-icon{font-size:48px}.final-score{display:block;font-size:52px;margin:6px;color:var(--green)}.new-high{color:#b7791f!important;font-weight:bold}.new-high.hidden{display:none}.modal-card button{width:100%;margin-top:10px}
-@media(max-width:420px){body{padding:8px}.screen{padding:16px;border-radius:16px}}
+:root{--bg:#e9ebf0;--card:#f7f7f8;--ink:#293342;--muted:#68717c;--green:#347f5c;--dark:#111318}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(145deg,#edf0f5,#dfe2e8);color:var(--ink);min-height:100vh}
+button,select{font:inherit}button{cursor:pointer;border:0}
+.app{max-width:760px;margin:auto;min-height:100vh;padding:24px}
+.screen{display:none;min-height:calc(100vh - 48px);align-items:center;justify-content:center}
+.screen.active{display:flex}
+.card{width:100%;background:rgba(250,250,251,.86);border-radius:32px;padding:36px;box-shadow:0 18px 55px rgba(49,57,70,.13)}
+.home-card{max-width:640px;text-align:center}
+.snake-logo{font-size:72px;width:132px;height:132px;margin:auto;background:#e5efeb;border-radius:50%;display:grid;place-items:center}
+h1{font-size:48px;margin:24px 0 8px}h2{margin:0;font-size:31px}p{color:var(--muted);font-size:20px}
+.stats,.game-stats{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:34px 0}
+.stat{border:1px solid #d6d9df;border-radius:26px;padding:25px;text-align:left;background:rgba(255,255,255,.38)}
+.stat span{display:block;color:var(--muted);font-size:18px;margin-bottom:12px}.stat strong{font-size:38px}
+.btn{width:100%;padding:23px;border-radius:20px;font-weight:700;font-size:22px;margin-top:16px;color:var(--ink)}
+.primary{background:var(--green);color:white}.secondary{background:#e4e7ec;border:1px solid #d5d9df}
+header{display:grid;grid-template-columns:70px 1fr 128px;align-items:center;gap:10px;margin-bottom:26px;text-align:center}
+.icon-btn,.pause-btn{height:66px;border-radius:20px;background:#e5e8ed;color:var(--ink);font-size:27px;font-weight:700}
+.pause-btn{background:#22252a;color:white;font-size:18px}
+.header-space{height:1px}.board-wrap{position:relative}
+canvas{display:block;width:100%;aspect-ratio:1;border-radius:26px;background:#111318;touch-action:none}
+.combo{position:absolute;top:18px;left:50%;transform:translateX(-50%);color:#ffd45b;font-weight:bold;font-size:20px;text-shadow:0 2px 8px #000;pointer-events:none}
+#gameMessage{text-align:center;margin:20px 0}
+.controls{text-align:center}.controls button{width:106px;height:86px;margin:7px;border-radius:22px;background:#e0e4ea;font-size:29px}.control-row{display:flex;justify-content:center}
+.settings-card{max-width:640px}.settings-card header{grid-template-columns:70px 1fr 70px}
+.setting{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:25px;margin:18px 0;border:1px solid #d6d9df;border-radius:26px}
+.setting strong{display:block;font-size:24px}.setting span{display:block;color:var(--muted);font-size:18px;margin-top:7px}
+select{padding:17px;border-radius:18px;border:1px solid #d2d6dd;background:#e7e9ed;font-size:20px}
+.switch input{display:none}.switch span{display:block!important;width:80px;height:46px;background:#c9ced6;border-radius:30px;position:relative}.switch span:after{content:"";position:absolute;width:36px;height:36px;background:white;border-radius:50%;top:5px;left:5px;transition:.2s}.switch input:checked+span{background:var(--green)}.switch input:checked+span:after{left:39px}
+.reset-btn{padding:16px 23px;border-radius:18px;background:#ffe2df;color:#b52f28;font-weight:bold;font-size:20px}.saved{text-align:center;font-size:17px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.56);align-items:center;justify-content:center;padding:24px;z-index:5}.modal.show{display:flex}.modal-card{width:min(610px,100%);background:#f8f8fa;border-radius:34px;padding:42px;text-align:center}.gameover-icon{font-size:72px}.modal-card p{margin:24px 0 8px}.modal-card strong{display:block;font-size:84px;color:var(--green)}
+@media(max-width:560px){.app{padding:24px}.card{padding:35px}.screen{min-height:calc(100vh - 48px)}h1{font-size:42px}.stats,.game-stats{gap:14px}.stat{padding:24px 18px}.stat strong{font-size:34px}header{grid-template-columns:70px 1fr 128px}.controls button{width:72px;height:76px}.setting{padding:22px}.setting strong{font-size:20px}.setting span{font-size:16px}}
