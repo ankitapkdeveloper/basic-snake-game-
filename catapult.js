@@ -149,3 +149,21 @@ ui.next.onclick=()=>{if(catGame.level<MAX_LEVEL&&catGame.complete){clearTimeout(
 function stopCatapultGame(){clearTimeout(catGame.levelTimer);cancelAnimationFrame(catGame.raf);catGame.paused=true;}
 window.startCatapultGame=startCatapultGame;window.stopCatapultGame=stopCatapultGame;
 cat$('resultHomeBtn').onclick=()=>{cat$('result').classList.remove('show');stopCatapultGame();window.dispatchEvent(new Event('catapult-go-home'));};
+
+
+function toggleCatapultFullscreen(){
+  const el=document.getElementById('catapultPage')?.querySelector('.catapult-card');
+  const btn=document.getElementById('cat_fullscreenBtn');
+  if(!el)return;
+  if(!document.fullscreenElement){
+    const p=el.requestFullscreen?.();
+    if(p&&p.catch)p.catch(()=>showToast('Fullscreen is not available in this browser.'));
+  }else{
+    document.exitFullscreen?.();
+  }
+}
+document.getElementById('cat_fullscreenBtn')?.addEventListener('click',toggleCatapultFullscreen);
+document.addEventListener('fullscreenchange',()=>{
+  const btn=document.getElementById('cat_fullscreenBtn');
+  if(btn)btn.textContent=document.fullscreenElement?'⤢':'⛶';
+});

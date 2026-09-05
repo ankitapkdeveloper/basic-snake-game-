@@ -18,3 +18,16 @@
 
 .rank-switch.wide{grid-template-columns:repeat(3,1fr)}
 @media(max-width:600px){.rank-switch.wide{grid-template-columns:repeat(2,1fr)}}
+
+.cat-game-head{grid-template-columns:58px 1fr auto}
+.cat-head-actions{display:flex;gap:8px;justify-content:flex-end}
+.cat-head-btn{height:56px;min-width:56px;border:0;border-radius:17px;background:#e6eaee;color:#293443;font-size:24px;font-weight:900}
+.catapult-card:fullscreen{width:100vw;height:100vh;overflow:auto;border-radius:0;background:#eef1f5;padding:18px;display:flex;flex-direction:column}
+.catapult-card:fullscreen .cat-stage-wrap{max-height:calc(100vh - 300px)}
+.catapult-card:fullscreen .cat-stage-wrap canvas{max-height:calc(100vh - 300px);object-fit:contain}
+.catapult-card:fullscreen .cat-control-panel{margin-top:auto}
+@media(max-width:600px){
+  .cat-game-head{grid-template-columns:50px 1fr auto}
+  .cat-head-actions{gap:6px}
+  .cat-head-btn,.catapult-card .pause-btn{height:50px;min-width:50px}
+}
