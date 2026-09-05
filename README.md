@@ -1,78 +1,27 @@
-# Snake Arena Phase 3
+# Snake Arena Phase 4
 
-This version adds:
-- Modern multi-page style UI
-- Shop + coin economy
-- 6 snake skins
-- Local skin inventory/equipping
-- Real Supabase email/password login
-- Online profile
-- Online coins/high score/game count sync
-- Global leaderboard
-- Difficulty, grid and sound settings
-- Responsive mobile UI
-- Bonus food (+30)
-- Swipe + keyboard + buttons
+Adds three new games without removing Snake Arena or Birdy Bird:
 
-## 1. First test without Supabase
+- 🎯 Archery: target shooting with levels and 10 arrows.
+- 🏗️ Tower: timing-based block stacking.
+- ⚡ Reaction Time: random GO signal, early-tap detection, millisecond results.
 
-Upload all files to GitHub and deploy to Vercel.
+Also adds:
+- Home game hub with five games.
+- Separate global leaderboards for all five games.
+- Reaction leaderboard sorts fastest time first.
+- Shared local coin wallet and Supabase reward functions for the new games.
+- Same mobile-first UI, touch and pointer controls.
 
-The game/shop/settings work in offline mode using localStorage.
-Profile/login and global leaderboard will show that Supabase is not configured.
+## Deploy
+Replace `index.html`, `style.css`, `app.js`, and `supabase-schema.sql` in the existing repo. Keep your existing `config.js` values.
 
-## 2. Connect Supabase
+## Supabase
+Run `supabase-schema.sql` in the Supabase SQL Editor. The new SQL adds three leaderboard tables and secure reward functions for Archery, Tower, and Reaction Time.
 
-Create a Supabase project.
-
-Open `config.js` and replace:
-- `YOUR_SUPABASE_PROJECT_URL`
-- `YOUR_SUPABASE_PUBLISHABLE_KEY`
-
-Use only the browser-safe publishable key. Never use a service_role/secret key in this file.
-
-## 3. Create the database
-
-Open Supabase Dashboard → SQL Editor and run all of `supabase-schema.sql`.
-
-The SQL creates:
-- `profiles`
-- `leaderboard`
-- Row Level Security policies
-- `submit_snake_score()` for atomic score/coin updates
-
-## 4. Authentication redirect
-
-In Supabase Auth URL Configuration, add your Vercel site URL as an allowed redirect URL.
-
-For example:
-https://YOUR-DOMAIN.vercel.app/
-
-## 5. What is online vs local in this phase
-
-Online:
-- Login / signup
-- Profile
-- High score
-- Games played
-- Coins earned after submitted scores
-- Global leaderboard
-
-Local:
-- Skin purchases/equipped skin
-- Difficulty
-- Grid
-- Sound
-
-The shop is intentionally not connected to real money yet. Real INR purchases should be added only after the secure backend/Razorpay phase.
-
-## 6. Important security note
-
-The frontend is never trusted. The prototype submits scores to a server function, but a future production version should add stronger anti-cheat/rate-limiting before treating scores or coin rewards as economically valuable.
+## Notes
+For production, add stronger anti-cheat/rate limiting before treating leaderboard scores or coins as economically valuable. Client games remain inherently tamperable until server-side validation is strengthened.
 
 
-## Birdy Bird update
-This version adds Birdy Bird with mobile tap controls, local best score, shared coins, and a separate global Birdy leaderboard.
-
-### Supabase
-Open Supabase → SQL Editor and run the updated `supabase-schema.sql` file once. The Birdy migration at the bottom creates `birdy_leaderboard` and `submit_birdy_score`.
+## Phase 6 – Catapult King
+Catapult King is integrated with the shared profile, local coin wallet, Supabase score submission, and global leaderboard. Run the appended Catapult King migration section in `supabase-schema.sql` before using online Catapult rankings.
