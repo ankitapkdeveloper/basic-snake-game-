@@ -2,79 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <meta name="theme-color" content="#080b1c">
-  <title>Brick Blast</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#080b19">
+  <title>Target Rush</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
-  <canvas id="game"></canvas>
-
   <header id="hud" class="hidden">
-    <div class="stat"><span>Score</span><b id="score">0</b></div>
-    <div class="stat"><span>Level</span><b id="level">1</b></div>
-    <div class="stat"><span>Lives</span><b id="lives">3</b></div>
-    <div class="stat"><span>Best</span><b id="highScore">0</b></div>
+    <div class="hudStats">
+      <div class="stat"><span>Score</span><b id="score">0</b></div>
+      <div class="stat"><span>Accuracy</span><b id="accuracy">100%</b></div>
+      <div class="stat"><span>Combo</span><b id="combo">x0</b></div>
+      <div class="stat timeStat"><span id="timeLabel">Time</span><b id="time">60</b></div>
+    </div>
+    <div class="hudActions">
+      <button id="pauseBtn" class="iconBtn" aria-label="Pause">❚❚</button>
+      <button id="soundBtn" class="iconBtn" aria-label="Sound">♪</button>
+      <button id="fullscreenBtn" class="iconBtn" aria-label="Fullscreen">⛶</button>
+    </div>
   </header>
 
-  <div id="topControls" class="hidden">
-    <button id="pauseBtn" aria-label="Pause">Ⅱ</button>
-    <button id="soundBtn" aria-label="Sound">♪</button>
-    <button id="fullBtn" aria-label="Fullscreen">⛶</button>
-  </div>
-
-  <div id="powerBar" class="hidden"></div>
-
-  <div id="overlay">
-    <section id="startScreen" class="panel">
-      <div class="logo">BRICK <span>BLAST</span></div>
-      <p class="tagline">NEON ARCADE BREAKOUT</p>
-      <div class="ballPreview">●</div>
-      <button class="primary" id="startBtn">PLAY GAME</button>
-      <button class="secondary" id="levelsBtn">LEVEL SELECT</button>
-      <div class="how">
-        <b>HOW TO PLAY</b>
-        <p>Drag to move • Keep the ball alive • Smash every brick</p>
+  <main id="gameArea" aria-label="Target Rush game area">
+    <div id="gameGlow"></div>
+    <div id="screen" class="screen active">
+      <div class="homeCard">
+        <div class="crosshairLogo"><span></span></div>
+        <div class="eyebrow">PRECISION ARCADE</div>
+        <h1>TARGET <em>RUSH</em></h1>
+        <p>Tap fast. Build combos. Avoid the bombs.</p>
+        <button id="playBtn" class="primary">PLAY NOW <span>→</span></button>
+        <button id="leaderboardBtn" class="secondary">⌁ &nbsp; HIGH SCORES</button>
       </div>
-    </section>
+      <div class="tips"><span>🎯 <b>Gold</b> bonus points</span><span>💣 Avoid bombs</span><span>⏱ Bonus time</span></div>
+    </div>
 
-    <section id="levelScreen" class="panel hidden">
-      <h2>SELECT LEVEL</h2>
-      <div id="levelGrid"></div>
-      <button class="secondary backBtn">BACK</button>
-    </section>
+    <div id="modeScreen" class="screen">
+      <div class="panel modePanel">
+        <div class="eyebrow">CHOOSE YOUR CHALLENGE</div>
+        <h2>SELECT MODE</h2>
+        <div class="modeGrid">
+          <button class="modeCard" data-mode="classic"><i>◎</i><strong>CLASSIC</strong><span>60 seconds of pure target action.</span></button>
+          <button class="modeCard" data-mode="time"><i>↯</i><strong>TIME ATTACK</strong><span>45 seconds. Chase the highest score.</span></button>
+          <button class="modeCard" data-mode="survival"><i>♥</i><strong>SURVIVAL</strong><span>Three lives. Pressure never stops.</span></button>
+        </div>
+        <button class="secondary backBtn">← &nbsp; BACK</button>
+      </div>
+    </div>
 
-    <section id="pauseScreen" class="panel hidden">
-      <h2>PAUSED</h2>
-      <button class="primary" id="resumeBtn">RESUME</button>
-      <button class="secondary" id="restartBtn">RESTART LEVEL</button>
-      <button class="secondary menuBtn">MAIN MENU</button>
-    </section>
+    <div id="pauseScreen" class="screen overlay">
+      <div class="panel compactPanel"><div class="eyebrow">TAKE A BREATH</div><h2>PAUSED</h2><p>Your targets are waiting.</p><button id="resumeBtn" class="primary">RESUME</button><button id="quitBtn" class="secondary">QUIT GAME</button></div>
+    </div>
 
-    <section id="gameOverScreen" class="panel hidden">
-      <h2 class="danger">GAME OVER</h2>
-      <p id="finalScore"></p>
-      <button class="primary" id="playAgainBtn">PLAY AGAIN</button>
-      <button class="secondary menuBtn">MAIN MENU</button>
-    </section>
+    <div id="gameOverScreen" class="screen overlay">
+      <div class="panel compactPanel"><div class="eyebrow">ROUND COMPLETE</div><h2 id="gameOverTitle">GAME OVER</h2><div class="finalScore" id="finalScore">0</div><p id="finalStats"></p><button id="restartBtn" class="primary">PLAY AGAIN</button><button id="menuBtn" class="secondary">MAIN MENU</button></div>
+    </div>
 
-    <section id="completeScreen" class="panel hidden">
-      <h2 class="success">LEVEL COMPLETE!</h2>
-      <p id="completeScore"></p>
-      <button class="primary" id="nextBtn">NEXT LEVEL</button>
-      <button class="secondary menuBtn">MAIN MENU</button>
-    </section>
+    <div id="leaderboardScreen" class="screen overlay">
+      <div class="panel compactPanel"><div class="eyebrow">YOUR DEVICE</div><h2>HIGH SCORES</h2><ol id="highScoreList"></ol><button id="closeLeaderboardBtn" class="secondary">CLOSE</button></div>
+    </div>
 
-    <section id="winScreen" class="panel hidden">
-      <h2 class="success">YOU BLASTED IT!</h2>
-      <p>You completed all 10 levels.</p>
-      <p id="winScore"></p>
-      <button class="primary menuBtn">PLAY AGAIN</button>
-    </section>
-  </div>
-
-  <div id="hint" class="hidden">Drag anywhere to move the paddle</div>
+    <div id="comboFlash">COMBO!</div>
+    <div id="toast"></div>
+  </main>
 </div>
 <script src="script.js"></script>
 </body>
