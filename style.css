@@ -34,8 +34,9 @@
 
 
 /* Integrated games */
-.target-choice{background:linear-gradient(135deg,#4c1d95,#7c3aed)}
-.highway-choice{background:linear-gradient(135deg,#7c2d12,#ea580c)}
-.brick-choice{background:linear-gradient(135deg,#0f766e,#14b8a6)}
+.target-choice{background:linear-gradient(145deg,#f1edff,#ffffff)}
+.highway-choice{background:linear-gradient(145deg,#fff0e8,#ffffff)}
+.brick-choice{background:linear-gradient(145deg,#e8f7f4,#ffffff)}
+.target-choice em{color:#6d4bc2}.highway-choice em{color:#c86a3d}.brick-choice em{color:#248f86}
 .external-game-page{padding:10px;max-width:980px;margin:0 auto}.external-game-head{display:flex;align-items:center;gap:12px;padding:10px 4px 14px}.external-game-head>div{flex:1}.external-game-head b{display:block;font-size:18px}.external-game-head small{opacity:.7}.external-fullscreen{border:0;border-radius:12px;padding:10px 14px;background:#202a3a;color:#fff;font-size:20px}.external-game-frame{display:block;width:100%;height:calc(100vh - 145px);min-height:620px;border:0;border-radius:20px;background:#111;box-shadow:0 10px 35px rgba(0,0,0,.3)}
 @media(max-width:600px){.external-game-page{padding:6px}.external-game-frame{height:calc(100vh - 125px);min-height:520px;border-radius:14px}.external-game-head{padding:8px 2px}}
