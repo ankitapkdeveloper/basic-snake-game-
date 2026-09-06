@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#080b1c">
+  <title>Brick Blast</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+
+  <header id="hud" class="hidden">
+    <div class="stat"><span>Score</span><b id="score">0</b></div>
+    <div class="stat"><span>Level</span><b id="level">1</b></div>
+    <div class="stat"><span>Lives</span><b id="lives">3</b></div>
+    <div class="stat"><span>Best</span><b id="highScore">0</b></div>
+  </header>
+
+  <div id="topControls" class="hidden">
+    <button id="pauseBtn" aria-label="Pause">Ⅱ</button>
+    <button id="soundBtn" aria-label="Sound">♪</button>
+    <button id="fullBtn" aria-label="Fullscreen">⛶</button>
+  </div>
+
+  <div id="powerBar" class="hidden"></div>
+
+  <div id="overlay">
+    <section id="startScreen" class="panel">
+      <div class="logo">BRICK <span>BLAST</span></div>
+      <p class="tagline">NEON ARCADE BREAKOUT</p>
+      <div class="ballPreview">●</div>
+      <button class="primary" id="startBtn">PLAY GAME</button>
+      <button class="secondary" id="levelsBtn">LEVEL SELECT</button>
+      <div class="how">
+        <b>HOW TO PLAY</b>
+        <p>Drag to move • Keep the ball alive • Smash every brick</p>
+      </div>
+    </section>
+
+    <section id="levelScreen" class="panel hidden">
+      <h2>SELECT LEVEL</h2>
+      <div id="levelGrid"></div>
+      <button class="secondary backBtn">BACK</button>
+    </section>
+
+    <section id="pauseScreen" class="panel hidden">
+      <h2>PAUSED</h2>
+      <button class="primary" id="resumeBtn">RESUME</button>
+      <button class="secondary" id="restartBtn">RESTART LEVEL</button>
+      <button class="secondary menuBtn">MAIN MENU</button>
+    </section>
+
+    <section id="gameOverScreen" class="panel hidden">
+      <h2 class="danger">GAME OVER</h2>
+      <p id="finalScore"></p>
+      <button class="primary" id="playAgainBtn">PLAY AGAIN</button>
+      <button class="secondary menuBtn">MAIN MENU</button>
+    </section>
+
+    <section id="completeScreen" class="panel hidden">
+      <h2 class="success">LEVEL COMPLETE!</h2>
+      <p id="completeScore"></p>
+      <button class="primary" id="nextBtn">NEXT LEVEL</button>
+      <button class="secondary menuBtn">MAIN MENU</button>
+    </section>
+
+    <section id="winScreen" class="panel hidden">
+      <h2 class="success">YOU BLASTED IT!</h2>
+      <p>You completed all 10 levels.</p>
+      <p id="winScore"></p>
+      <button class="primary menuBtn">PLAY AGAIN</button>
+    </section>
+  </div>
+
+  <div id="hint" class="hidden">Drag anywhere to move the paddle</div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
