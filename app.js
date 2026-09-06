@@ -253,8 +253,8 @@ document.querySelectorAll("[data-dir]").forEach(btn=>{
 });
 $("restartBtn")?.addEventListener("click",()=>startSnake());
 $("gameCanvas")?.addEventListener("pointerdown",e=>{
-  if(!running || paused) return;
-  // Tap left/right half of the snake board to turn relative to current heading.
+  if(e.pointerType!=="mouse" || !running || paused) return;
+  // Mouse-only tap steering; touch devices use the absolute swipe controls below.
   const r=$("gameCanvas").getBoundingClientRect(),x=e.clientX-r.left;
   const center=r.width/2;
   if(Math.abs(x-center)<r.width*.16) return;
