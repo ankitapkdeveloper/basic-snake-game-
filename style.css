@@ -40,3 +40,16 @@
 .target-choice em{color:#6d4bc2}.highway-choice em{color:#c86a3d}.brick-choice em{color:#248f86}
 .external-game-page{padding:10px;max-width:980px;margin:0 auto}.external-game-head{display:flex;align-items:center;gap:12px;padding:10px 4px 14px}.external-game-head>div{flex:1}.external-game-head b{display:block;font-size:18px}.external-game-head small{opacity:.7}.external-fullscreen{border:0;border-radius:12px;padding:10px 14px;background:#202a3a;color:#fff;font-size:20px}.external-game-frame{display:block;visibility:visible;width:100%;height:calc(100vh - 145px);min-height:620px;border:0;border-radius:20px;background:#111;box-shadow:0 10px 35px rgba(0,0,0,.3)}
 @media(max-width:600px){.external-game-page{padding:6px}.external-game-frame{height:calc(100vh - 125px);min-height:520px;border-radius:14px}.external-game-head{padding:8px 2px}}
+
+/* Game Arena additions */
+.game2048-choice{background:linear-gradient(145deg,#eef1ff,#fff)}.game2048-choice em{color:#5f6fc7}
+.fruit-choice{background:linear-gradient(145deg,#eafaf1,#fff)}.fruit-choice em{color:#2e8a61}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit}.profile-avatar{overflow:hidden}
+.photo-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}.status-inline{color:#6d7783;font-size:13px}
+.friends-card{padding:20px}.page-head.compact{margin-bottom:12px}.friend-search{display:grid;grid-template-columns:1fr auto;gap:8px}
+.friend-search input{padding:13px 14px;border:1px solid #d5dae0;border-radius:14px;background:#fff;font-size:15px}
+.friends-list{display:grid;gap:8px;margin-top:10px}.friend-row{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid #e0e4e8;border-radius:15px;background:#fff}
+.friend-row small{display:block;color:#89919b;margin-top:2px}.friend-avatar{width:40px;height:40px;border-radius:13px;background:#e8f0ea;display:grid;place-items:center;overflow:hidden}.friend-avatar img{width:100%;height:100%;object-fit:cover}.friend-actions{display:flex;gap:6px}.ghost-mini{background:#eef0f3!important;color:#4c5865!important}
+.friend-empty{padding:10px 2px;color:#86909b;font-size:14px}.friends-section{margin-top:18px}.friends-section h4{margin:0 0 7px;color:#596571}
+.rank-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+@media(max-width:600px){.friend-row{grid-template-columns:40px 1fr}.friend-actions{grid-column:2;justify-content:flex-start}.photo-actions .btn{width:100%}}

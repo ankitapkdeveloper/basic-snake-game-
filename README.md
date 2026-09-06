@@ -1,41 +1,43 @@
-# Snake Arena Phase 4
+# Game Arena – 11 Games
 
-Adds three new games without removing Snake Arena or Birdy Bird:
+This build keeps every game in the main repository as a single JavaScript file.
 
-- 🎯 Archery: target shooting with levels and 10 arrows.
-- 🏗️ Tower: timing-based block stacking.
-- ⚡ Reaction Time: random GO signal, early-tap detection, millisecond results.
+## Root files
+- index.html – Game Arena main menu
+- app.js – navigation, profiles, friends, leaderboard integration
+- style.css
+- config.js
+- supabase-schema.sql
+- game-arena-supabase-schema.sql
+- catapult.js
+- target-rush.js
+- highway-rush.js
+- brick-blast.js
+- 2048-master.js
+- fruit-slice.js
 
-Also adds:
-- Home game hub with five games.
-- Separate global leaderboards for all five games.
-- Reaction leaderboard sorts fastest time first.
-- Shared local coin wallet and Supabase reward functions for the new games.
-- Same mobile-first UI, touch and pointer controls.
-
-## Deploy
-Replace `index.html`, `style.css`, `app.js`, and `supabase-schema.sql` in the existing repo. Keep your existing `config.js` values.
+## Games
+1. Snake Arena
+2. Birdy Bird
+3. Archery
+4. Tower
+5. Reaction Time
+6. Catapult King
+7. Target Rush
+8. Highway Rush
+9. Brick Blast
+10. 2048 Master
+11. Fruit Slice
 
 ## Supabase
-Run `supabase-schema.sql` in the Supabase SQL Editor. The new SQL adds three leaderboard tables and secure reward functions for Archery, Tower, and Reaction Time.
+Run `supabase-schema.sql` in the Supabase SQL Editor before testing online leaderboards, profile photo uploads, or friends.
 
-## Notes
-For production, add stronger anti-cheat/rate limiting before treating leaderboard scores or coins as economically valuable. Client games remain inherently tamperable until server-side validation is strengthened.
+The schema includes:
+- Separate Target Rush Classic / Time Attack / Survival leaderboards
+- Highway Rush and Brick Blast leaderboards
+- 2048 Master and Fruit Slice leaderboards
+- Profile photo `avatars` storage bucket
+- Friend requests and friendships
 
-
-## Phase 6 – Catapult King
-Catapult King is integrated with the shared profile, local coin wallet, Supabase score submission, and global leaderboard. Run the appended Catapult King migration section in `supabase-schema.sql` before using online Catapult rankings.
-
-
-### Catapult mobile/fullscreen fix
-The integrated build now loads `catapult.js` after the app scripts (required for gameplay input) and adds a fullscreen button to the Catapult King header.
-
-
-## Single-file game structure
-The three new games are stored as root JavaScript files: target-rush.js, highway-rush.js, and brick-blast.js. Do not create separate game folders. Keep all files together in the repository root.
-
-
-## V3 gameplay repair
-- Restored touch/mouse/keyboard controls for the original six games.
-- Fixed the Brick Blast animation loop so it does not die before the first game starts.
-- New games now load through native iframe `srcdoc` for reliable execution.
+## GitHub/Vercel
+Upload all root files without renaming or flattening them. The repository root `index.html` must be the Game Arena main menu.

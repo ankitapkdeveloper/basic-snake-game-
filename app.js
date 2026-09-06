@@ -2,14 +2,16 @@ document.addEventListener("DOMContentLoaded",()=>{
 const $=id=>document.getElementById(id); const CONFIG=window.SNAKE_CONFIG||{};
 const onlineReady=!!(CONFIG.supabaseUrl&&CONFIG.supabaseKey&&!String(CONFIG.supabaseUrl).includes("YOUR_")&&!String(CONFIG.supabaseKey).includes("YOUR_"));
 const sb=onlineReady&&window.supabase?window.supabase.createClient(CONFIG.supabaseUrl,CONFIG.supabaseKey):null;
-const pages=["home","game","birdy","archery","tower","reaction","catapult","shop","leaderboard","profile","settings"];
+const pages=["home","game","birdy","archery","tower","reaction","catapult","targetRush","highwayRush","brickBlast","game2048","fruitSlice","shop","leaderboard","profile","settings"];
 const skins=[{id:"classic",name:"Classic Snake",icon:"🐍",price:0,bg:"#dff0e8",body:"#4bbf76",head:"#86f23b"},{id:"fire",name:"Fire Snake",icon:"🔥",price:150,bg:"#ffe9df",body:"#ef784e",head:"#ffb340"},{id:"ocean",name:"Ocean Snake",icon:"🌊",price:300,bg:"#e0eff9",body:"#3d96c8",head:"#6dd5fa"},{id:"royal",name:"Royal Snake",icon:"👑",price:500,bg:"#eee5fa",body:"#8c63c6",head:"#b796ff"},{id:"neon",name:"Neon Snake",icon:"⚡",price:750,bg:"#e5f6ef",body:"#16c985",head:"#b7ff5c"},{id:"rainbow",name:"Rainbow Snake",icon:"🌈",price:1000,bg:"#f6e9fa",body:"#db6cd0",head:"#ffdd6d"}];
 let local=JSON.parse(localStorage.getItem("snakeArenaLocal")||"{}"); Object.assign(local,{highScore:Number(local.highScore||0),games:Number(local.games||0),coins:Number(local.coins??100),owned:Array.isArray(local.owned)?local.owned:["classic"],skin:local.skin||"classic",settings:Object.assign({difficulty:"normal",grid:true,sound:true},local.settings||{}),birdyHighScore:Number(local.birdyHighScore||0),birdyGames:Number(local.birdyGames||0),archeryHighScore:Number(local.archeryHighScore||0),archeryGames:Number(local.archeryGames||0),towerHighScore:Number(local.towerHighScore||0),towerGames:Number(local.towerGames||0),reactionBest:local.reactionBest==null?null:Number(local.reactionBest),reactionGames:Number(local.reactionGames||0),catapultHighScore:Number(local.catapultHighScore||0),catapultGames:Number(local.catapultGames||0),targetHighScore:Number(local.targetHighScore||0),targetGames:Number(local.targetGames||0),targetClassicHighScore:Number(local.targetClassicHighScore||0),targetClassicGames:Number(local.targetClassicGames||0),targetTimeHighScore:Number(local.targetTimeHighScore||0),targetTimeGames:Number(local.targetTimeGames||0),targetSurvivalHighScore:Number(local.targetSurvivalHighScore||0),targetSurvivalGames:Number(local.targetSurvivalGames||0),highwayHighScore:Number(local.highwayHighScore||0),highwayGames:Number(local.highwayGames||0),brickHighScore:Number(local.brickHighScore||0),brickGames:Number(local.brickGames||0)});
 let user=null,profile=null,activeRankGame="snake";
 function save(){localStorage.setItem("snakeArenaLocal",JSON.stringify(local))} function esc(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
-function show(page){pages.forEach(p=>{const e=$(p+"Page");if(e)e.classList.toggle("active",p===page)});document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===page));if(page==="home")updateUI();if(page==="shop")renderShop();if(page==="leaderboard")loadLeaderboard();if(page==="profile")updateUI()}
+function show(page){pages.forEach(p=>{const e=$(p+"Page");if(e)e.classList.toggle("active",p===page)});document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===page));if(page==="home")updateUI();if(page==="shop")renderShop();if(page==="leaderboard")loadLeaderboard();if(page==="profile"){updateUI();if(user)loadFriends()}}
 function modal(id,on){$(id).classList.toggle("show",on)}
-function updateUI(){ $("homeBest").textContent=local.highScore;$("homeCoins").textContent=local.coins;$("homeGames").textContent=local.games;$("gameBest").textContent=local.highScore;$("gameCoins").textContent=local.coins;$("shopCoins").textContent=local.coins;$("birdyBest").textContent=local.birdyHighScore;$("birdyCoins").textContent=local.coins;$("archeryBest").textContent=local.archeryHighScore;if($("archeryCoins")) $("archeryCoins").textContent=local.coins;$("towerBest").textContent=local.towerHighScore;$("reactionCoins").textContent=local.coins;if($("cat_best")) $("cat_best").textContent=local.catapultHighScore;$("reactionBest").textContent=local.reactionBest==null?"—":local.reactionBest+" ms";const s=skins.find(x=>x.id===local.skin)||skins[0];$("activeSkinName").textContent=s.name;$("profileSkin").textContent=s.name;$("profileLoggedOut").classList.toggle("hidden",!!user);$("profileLoggedIn").classList.toggle("hidden",!user);$("profileBest").textContent=profile?.high_score??local.highScore;$("profileCoins").textContent=profile?.coins??local.coins;$("profileGames").textContent=profile?.games_played??local.games;if(user){$("profileUsername").textContent=profile?.username||user.email?.split("@")[0]||"Player";$("profileEmail").textContent=user.email||"";$("profileAvatar").textContent=profile?.avatar_url||"🐍"}}
+function isImageAvatar(v){return /^https?:\/\//i.test(String(v||""))}
+function avatarMarkup(v,cls="rank-avatar"){const s=String(v||"🎮");return isImageAvatar(s)?`<span class="${cls}"><img src="${esc(s)}" alt="Profile photo"></span>`:`<span class="${cls}">${esc(s)}</span>`}
+function updateUI(){ $("homeBest").textContent=local.highScore;$("homeCoins").textContent=local.coins;$("homeGames").textContent=local.games;$("gameBest").textContent=local.highScore;$("gameCoins").textContent=local.coins;$("shopCoins").textContent=local.coins;$("birdyBest").textContent=local.birdyHighScore;$("birdyCoins").textContent=local.coins;$("archeryBest").textContent=local.archeryHighScore;if($("archeryCoins")) $("archeryCoins").textContent=local.coins;$("towerBest").textContent=local.towerHighScore;$("reactionCoins").textContent=local.coins;if($("cat_best")) $("cat_best").textContent=local.catapultHighScore;$("reactionBest").textContent=local.reactionBest==null?"—":local.reactionBest+" ms";if($("game2048Best"))$("game2048Best").textContent=local.game2048HighScore;if($("fruitBest"))$("fruitBest").textContent=local.fruitHighScore;const s=skins.find(x=>x.id===local.skin)||skins[0];$("activeSkinName").textContent=s.name;$("profileSkin").textContent=s.name;$("profileLoggedOut").classList.toggle("hidden",!!user);$("profileLoggedIn").classList.toggle("hidden",!user);$("profileBest").textContent=profile?.high_score??local.highScore;$("profileCoins").textContent=profile?.coins??local.coins;$("profileGames").textContent=profile?.games_played??local.games;if(user){$("profileUsername").textContent=profile?.username||user.email?.split("@")[0]||"Player";$("profileEmail").textContent=user.email||"";const av=profile?.avatar_url||"🐍";$("profileAvatar").innerHTML=isImageAvatar(av)?`<img src="${esc(av)}" alt="Profile photo">`:esc(av)}}
 async function loadProfile(){if(!sb||!user)return;const {data,error}=await sb.from("profiles").select("*").eq("id",user.id).maybeSingle();if(!error&&data){profile=data;local.coins=data.coins;local.highScore=Math.max(local.highScore,data.high_score||0);local.games=Math.max(local.games,data.games_played||0);save()}else if(!data){const username=user.user_metadata?.username||user.email?.split("@")[0]||"Player";const {data:created}=await sb.from("profiles").insert({id:user.id,username,coins:100,high_score:0,games_played:0,avatar_url:"🐍"}).select().single();if(created)profile=created}}
 async function loadSession(){if(sb){const {data:{session}}=await sb.auth.getSession();user=session?.user||null;if(user)await loadProfile()}updateUI();loadLeaderboard()}
 function renderShop(){$("shopCoins").textContent=local.coins;$(`shopGrid`).innerHTML=skins.map(s=>{const own=local.owned.includes(s.id),sel=local.skin===s.id;return `<div class="shop-item ${sel?"selected":""}"><div class="skin-preview" style="background:${s.bg}">${s.icon}</div><h3>${s.name}</h3><p>${s.price===0?"Free":`🪙 ${s.price} coins`}</p><button data-skin="${s.id}" class="${own?"owned":"buy"}">${sel?"✓ Equipped":own?"Equip":`Buy • 🪙 ${s.price}`}</button></div>`}).join("");document.querySelectorAll("[data-skin]").forEach(b=>b.onclick=()=>{const s=skins.find(x=>x.id===b.dataset.skin);if(local.owned.includes(s.id)){local.skin=s.id;save();renderShop();updateUI();return}if(local.coins<s.price){alert("Not enough coins.");return}local.coins-=s.price;local.owned.push(s.id);local.skin=s.id;save();renderShop();updateUI()})}
@@ -65,12 +67,13 @@ async function loadLeaderboard(){
     reaction:"reaction_leaderboard",catapult:"catapult_leaderboard",
     target_classic:"target_rush_classic_leaderboard",target_time:"target_rush_time_leaderboard",
     target_survival:"target_rush_survival_leaderboard",
-    highway:"highway_rush_leaderboard",brick:"brick_blast_leaderboard"
+    highway:"highway_rush_leaderboard",brick:"brick_blast_leaderboard",
+    "2048":"game2048_leaderboard",fruit:"fruit_slice_leaderboard"
   };
   const labelMap={
     snake:"Snake",birdy:"Birdy",archery:"Archery",tower:"Tower",reaction:"Reaction",catapult:"Catapult",
     target_classic:"Target Rush Classic",target_time:"Target Rush Time Attack",target_survival:"Target Rush Survival",
-    highway:"Highway Rush",brick:"Brick Blast"
+    highway:"Highway Rush",brick:"Brick Blast","2048":"2048 Master",fruit:"Fruit Slice"
   };
   const table=tableMap[activeRankGame];
   if(!table){list.innerHTML='<div class="rank-row"><span>!</span><span>Unknown leaderboard</span><strong>—</strong></div>';return;}
@@ -79,7 +82,7 @@ async function loadLeaderboard(){
   const {data,error}=await sb.from(table).select("score,username,avatar_url").order("score",{ascending:activeRankGame==="reaction"}).limit(50);
   if(error){list.innerHTML=`<div class="rank-row"><span>!</span><span>${esc(error.message.includes("does not exist")?"Run the NEW leaderboard SQL migration first.":error.message)}</span><strong>—</strong></div>`;return;}
   if(!data?.length){list.innerHTML='<div class="rank-row"><span>—</span><span>No scores yet</span><strong>—</strong></div>';return;}
-  list.innerHTML=data.map((r,i)=>`<div class="rank-row"><span>${i<3?["🥇","🥈","🥉"][i]:i+1}</span><span class="rank-player"><span class="rank-avatar">${esc(r.avatar_url||"🎮")}</span>${esc(r.username||"Player")}</span><strong class="rank-score">${r.score}${activeRankGame==="reaction"?" ms":""}</strong></div>`).join("");
+  list.innerHTML=data.map((r,i)=>`<div class="rank-row"><span>${i<3?["🥇","🥈","🥉"][i]:i+1}</span><span class="rank-player">${avatarMarkup(r.avatar_url,"rank-avatar")}${esc(r.username||"Player")}</span><strong class="rank-score">${r.score}${activeRankGame==="reaction"?" ms":""}</strong></div>`).join("");
 }
 // Catapult King integration event
 window.addEventListener("catapult-game-finished",async e=>{const {score=0}=e.detail||{};local.catapultGames++;local.games++;const earned=Math.max(2,Math.floor(score/80));if(score>local.catapultHighScore)local.catapultHighScore=score;if(!(sb&&user))local.coins+=earned;save();updateUI();if(sb&&user){try{await sb.rpc("submit_catapult_score",{p_score:score});await loadProfile();updateUI()}catch(err){console.warn("Catapult score submit failed",err)}}});
@@ -90,10 +93,12 @@ window.addEventListener("message", async (event)=>{
   const expected={
     target:$("targetRushFrame")?.contentWindow,
     highway:$("highwayRushFrame")?.contentWindow,
-    brick:$("brickBlastFrame")?.contentWindow
+    brick:$("brickBlastFrame")?.contentWindow,
+    "2048":$("game2048Frame")?.contentWindow,
+    fruit:$("fruitSliceFrame")?.contentWindow
   };
   const d=event.data||{};
-  if(d.type!=="snake-arena-game-finished" || !["target","highway","brick"].includes(d.game)) return;
+  if(d.type!=="snake-arena-game-finished" || !["target","highway","brick","2048","fruit"].includes(d.game)) return;
   if(expected[d.game] && event.source!==expected[d.game]) return;
 
   const score=Math.max(0,Math.min(1000000,Math.floor(Number(d.score)||0)));
@@ -111,8 +116,12 @@ window.addEventListener("message", async (event)=>{
     reward=Math.floor(score/100);
   }else if(game==="highway"){
     rpcName="submit_highway_rush_score";localGameKey="highwayGames";localHighKey="highwayHighScore";reward=Math.floor(score/75);
-  }else{
+  }else if(game==="brick"){
     rpcName="submit_brick_blast_score";localGameKey="brickGames";localHighKey="brickHighScore";reward=Math.floor(score/25);
+  }else if(game==="2048"){
+    rpcName="submit_2048_score";localGameKey="game2048Games";localHighKey="game2048HighScore";reward=Math.floor(score/100);
+  }else{
+    rpcName="submit_fruit_slice_score";localGameKey="fruitGames";localHighKey="fruitHighScore";reward=Math.floor(score/50);
   }
 
   local[localGameKey]=Number(local[localGameKey]||0)+1;
@@ -135,17 +144,80 @@ window.addEventListener("message", async (event)=>{
 window.addEventListener("message", (event) => {
   const d = event.data || {};
   if (d.type === "snake-arena-game-home") {
-    const frames = ["targetRushFrame","highwayRushFrame","brickBlastFrame"];
+    const frames = ["targetRushFrame","highwayRushFrame","brickBlastFrame","game2048Frame","fruitSliceFrame"];
     if (!frames.some(id => $(id)?.contentWindow === event.source)) return;
     show("home");
   }
 });
 
+// Friends + profile photo helpers
+async function loadFriends(){
+  if(!sb||!user){renderFriends([],[]);return}
+  try{
+    const [fr, req]=await Promise.all([sb.rpc("list_friends"),sb.rpc("list_friend_requests")]);
+    renderFriends(fr.data||[],req.data||[]);
+  }catch(e){renderFriends([],[]);const s=$("friendsStatus");if(s)s.textContent=e?.message||"Could not load friends."}
+}
+function renderFriends(friends,requests){
+  const list=$("friendsList"), incoming=$("friendRequests");
+  if(list) list.innerHTML=friends.length?friends.map(f=>`<div class="friend-row">${avatarMarkup(f.avatar_url,"friend-avatar")}<div><b>${esc(f.username||"Player")}</b><small>Friend</small></div></div>`).join(""):'<div class="friend-empty">No friends yet.</div>';
+  if(incoming) incoming.innerHTML=requests.length?requests.map(r=>`<div class="friend-row request-row">${avatarMarkup(r.avatar_url,"friend-avatar")}<div><b>${esc(r.username||"Player")}</b><small>Wants to be your friend</small></div><div class="friend-actions"><button data-friend-accept="${r.id}" class="mini-btn">Accept</button><button data-friend-reject="${r.id}" class="mini-btn ghost-mini">Reject</button></div></div>`).join(""):'<div class="friend-empty">No pending requests.</div>';
+  document.querySelectorAll("[data-friend-accept]").forEach(b=>b.onclick=()=>respondFriend(b.dataset.friendAccept,true));
+  document.querySelectorAll("[data-friend-reject]").forEach(b=>b.onclick=()=>respondFriend(b.dataset.friendReject,false));
+}
+async function searchFriends(){
+  const q=($("friendSearchInput")?.value||"").trim(), out=$("friendSearchResults"), status=$("friendsStatus");
+  if(!q){if(out)out.innerHTML="";return}
+  if(!sb||!user){if(status)status.textContent="Login required.";return}
+  if(status)status.textContent="";
+  const {data,error}=await sb.rpc("search_profiles",{p_query:q});
+  if(error){if(status)status.textContent=error.message;return}
+  if(out)out.innerHTML=data?.length?data.map(p=>`<div class="friend-row">${avatarMarkup(p.avatar_url,"friend-avatar")}<div><b>${esc(p.username)}</b></div><button class="mini-btn" data-add-friend="${p.id}">Add</button></div>`).join(""):'<div class="friend-empty">No players found.</div>';
+  document.querySelectorAll("[data-add-friend]").forEach(b=>b.onclick=()=>sendFriendRequest(b.dataset.addFriend));
+}
+async function sendFriendRequest(id){
+  const status=$("friendsStatus");
+  if(!sb||!user){if(status)status.textContent="Login required.";return}
+  const {error}=await sb.rpc("send_friend_request",{p_friend_id:id});
+  if(status)status.textContent=error?"Could not send request: "+error.message:"Friend request sent.";
+  $("friendSearchResults").innerHTML="";
+  await loadFriends();
+}
+async function respondFriendRequest(id,accept){
+  const status=$("friendsStatus");
+  const {error}=await sb.rpc("respond_friend_request",{p_request_id:Number(id),p_accept:accept});
+  if(status)status.textContent=error?error.message:(accept?"Friend added!":"Request declined.");
+  await loadFriends();
+}
+async function uploadProfilePhoto(file){
+  const status=$("photoStatus");
+  if(!sb||!user){if(status)status.textContent="Login required.";return}
+  if(!file||!file.type.startsWith("image/")){if(status)status.textContent="Please select an image.";return}
+  if(file.size>5*1024*1024){if(status)status.textContent="Image must be 5 MB or smaller.";return}
+  status.textContent="Uploading…";
+  try{
+    const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+    const img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=dataUrl});
+    const max=512, scale=Math.min(1,max/Math.max(img.width,img.height)), c=document.createElement("canvas");c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    const blob=await new Promise(res=>c.toBlob(res,"image/jpeg",.82));
+    const path=`${user.id}/avatar-${Date.now()}.jpg`;
+    const up=await sb.storage.from("avatars").upload(path,blob,{contentType:"image/jpeg",upsert:false});
+    if(up.error)throw up.error;
+    const publicUrl=sb.storage.from("avatars").getPublicUrl(up.data.path).data.publicUrl;
+    const res=await sb.from("profiles").update({avatar_url:publicUrl}).eq("id",user.id).select().single();
+    if(res.error)throw res.error;
+    profile=res.data;await sb.rpc("sync_my_leaderboard_profile");updateUI();if($("leaderboardPage")?.classList.contains("active"))loadLeaderboard();status.textContent="Profile photo updated.";
+  }catch(e){status.textContent="Upload failed: "+(e?.message||"Unknown error")}
+}
 // Auth
-let signupMode=false;function authMode(s){signupMode=s;$("authTitle").textContent=s?"Create Account":"Login";$("authSubtitle").textContent=s?"Start your Snake Arena profile.":"Welcome back to Snake Arena.";$("usernameInput").classList.toggle("hidden",!s);$("authSubmit").textContent=s?"Sign Up":"Login";$("switchAuth").textContent=s?"I already have an account":"Create an account";$("authStatus").textContent=""}
+let signupMode=false;function authMode(s){signupMode=s;$("authTitle").textContent=s?"Create Account":"Login";$("authSubtitle").textContent=s?"Start your Game Arena profile.":"Welcome back to Game Arena.";$("usernameInput").classList.toggle("hidden",!s);$("authSubmit").textContent=s?"Sign Up":"Login";$("switchAuth").textContent=s?"I already have an account":"Create an account";$("authStatus").textContent=""}
 $("accountBtn").onclick=()=>{show("profile");if(!user)modal("authModal",true)};$("loginOpenBtn").onclick=()=>modal("authModal",true);$("closeAuth").onclick=()=>modal("authModal",false);$("switchAuth").onclick=()=>authMode(!signupMode);
 $("authForm").onsubmit=async e=>{e.preventDefault();if(!sb){$("authStatus").textContent="Add your Supabase URL and publishable key in config.js first.";return}$("authStatus").textContent="";const email=$("emailInput").value.trim(),password=$("passwordInput").value;let res;if(signupMode){const username=$("usernameInput").value.trim()||email.split("@")[0];res=await sb.auth.signUp({email,password,options:{data:{username},emailRedirectTo:location.origin+location.pathname}});if(!res.error&&res.data.user)$("authStatus").textContent=res.data.session?"Account created.":"Check your email to confirm your account."}else res=await sb.auth.signInWithPassword({email,password});if(res.error){$("authStatus").textContent=res.error.message;return}if(res.data?.session){user=res.data.user;await loadProfile();updateUI();modal("authModal",false);show("profile")}};
-$("logoutBtn").onclick=async()=>{if(sb)await sb.auth.signOut();user=null;profile=null;updateUI();show("home")};$("editProfileBtn").onclick=()=>{$("editUsername").value=profile?.username||"";$("editAvatar").value=profile?.avatar_url||"🐍";modal("editModal",true)};$("closeEdit").onclick=()=>modal("editModal",false);$("saveProfileBtn").onclick=async()=>{if(!sb||!user){$("editStatus").textContent="Login is required.";return}const {data,error}=await sb.from("profiles").update({username:$("editUsername").value.trim()||"Player",avatar_url:$("editAvatar").value.trim()||"🐍"}).eq("id",user.id).select().single();if(error){$("editStatus").textContent=error.message;return}profile=data;updateUI();modal("editModal",false)};
+$("uploadPhotoBtn")?.addEventListener("click",()=>$("profilePhotoInput")?.click());
+$("profilePhotoInput")?.addEventListener("change",e=>uploadProfilePhoto(e.target.files?.[0]));
+$("friendSearchBtn")?.addEventListener("click",searchFriends);
+$("friendSearchInput")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchFriends()}});
+$("logoutBtn").onclick=async()=>{if(sb)await sb.auth.signOut();user=null;profile=null;updateUI();show("home")};$("editProfileBtn").onclick=()=>{$("editUsername").value=profile?.username||"";$("editAvatar").value=profile?.avatar_url||"🐍";modal("editModal",true)};$("closeEdit").onclick=()=>modal("editModal",false);$("saveProfileBtn").onclick=async()=>{if(!sb||!user){$("editStatus").textContent="Login is required.";return}const {data,error}=await sb.from("profiles").update({username:$("editUsername").value.trim()||"Player",avatar_url:$("editAvatar").value.trim()||"🐍"}).eq("id",user.id).select().single();if(error){$("editStatus").textContent=error.message;return}profile=data;await sb.rpc("sync_my_leaderboard_profile");updateUI();if($("leaderboardPage")?.classList.contains("active"))loadLeaderboard();modal("editModal",false)};
 
 // Main game launchers: keep all nine game buttons wired after integration.
 const gameLaunchers={
@@ -190,6 +262,22 @@ $("gameCanvas")?.addEventListener("pointerdown",e=>{
   if(dir.x!==0) setDir(left?"up":"down");
   else setDir(left?"left":"right");
 },{passive:true});
+
+// Absolute swipe controls for Snake: swipe direction matches movement direction.
+let snakeTouchStart=null;
+$("gameCanvas")?.addEventListener("touchstart",e=>{
+  if(!running||paused)return;
+  const t=e.changedTouches[0];snakeTouchStart={x:t.clientX,y:t.clientY};
+},{passive:true});
+$("gameCanvas")?.addEventListener("touchend",e=>{
+  if(!snakeTouchStart||!running||paused)return;
+  const t=e.changedTouches[0],dx=t.clientX-snakeTouchStart.x,dy=t.clientY-snakeTouchStart.y;
+  snakeTouchStart=null;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<28)return;
+  e.preventDefault();
+  setDir(Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up"));
+},{passive:false});
+$("gameCanvas")?.addEventListener("touchmove",e=>{if(running&&!paused)e.preventDefault()},{passive:false});
 
 $("birdyCanvas")?.addEventListener("pointerdown",e=>{e.preventDefault();flap()},{passive:false});
 $("birdyPauseBtn")?.addEventListener("click",()=>{
@@ -271,6 +359,8 @@ if(sb)sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(u
   document.getElementById('playTargetRushBtn')?.addEventListener('click',()=>openExternal('targetRushPage','__loadTargetRush'));
   document.getElementById('playHighwayRushBtn')?.addEventListener('click',()=>openExternal('highwayRushPage','__loadHighwayRush'));
   document.getElementById('playBrickBlastBtn')?.addEventListener('click',()=>openExternal('brickBlastPage','__loadBrickBlast'));
+  document.getElementById('play2048Btn')?.addEventListener('click',()=>openExternal('game2048Page','__load2048'));
+  document.getElementById('playFruitSliceBtn')?.addEventListener('click',()=>openExternal('fruitSlicePage','__loadFruitSlice'));
   document.querySelectorAll('[data-external-back]').forEach(btn=>btn.addEventListener('click',()=>{
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('homePage').classList.add('active');
