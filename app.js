@@ -344,7 +344,29 @@ document.addEventListener("keydown",e=>{
 
 
 // Settings/ranks
-document.querySelectorAll("[data-rank-game]").forEach(b=>b.onclick=()=>{activeRankGame=b.dataset.rankGame;document.querySelectorAll("[data-rank-game]").forEach(x=>x.classList.toggle("active",x===b));loadLeaderboard()});$("refreshRanks").onclick=loadLeaderboard;$("difficulty").value=local.settings.difficulty;$("gridToggle").checked=local.settings.grid;$("soundToggle").checked=local.settings.sound;$("difficulty").onchange=e=>{local.settings.difficulty=e.target.value;save()};$("gridToggle").onchange=e=>{local.settings.grid=e.target.checked;save();drawSnake()};$("soundToggle").onchange=e=>{local.settings.sound=e.target.checked;save()};$("resetLocalBtn").onclick=()=>{if(confirm("Reset local high scores, coins, skins and settings?")){localStorage.removeItem("snakeArenaLocal");location.reload()}};
+document.querySelectorAll("[data-rank-game]").forEach(b=>b.onclick=()=>{
+  const game=b.dataset.rankGame;
+  const modes=$("targetRankModes");
+  if(game==="target"){
+    modes?.classList.toggle("hidden");
+    if(!modes?.classList.contains("hidden")){
+      activeRankGame=["target_classic","target_time","target_survival"].includes(activeRankGame)?activeRankGame:"target_classic";
+      document.querySelectorAll(".rank-sub-game").forEach(x=>x.classList.toggle("active",x.dataset.rankGame===activeRankGame));
+      document.querySelectorAll(".rank-game:not(.rank-sub-game)").forEach(x=>x.classList.toggle("active",x.dataset.rankGame==="target"));
+      loadLeaderboard();
+    }
+    return;
+  }
+  activeRankGame=game;
+  if(!game.startsWith("target_")) modes?.classList.add("hidden");
+  document.querySelectorAll(".rank-game:not(.rank-sub-game)").forEach(x=>x.classList.toggle("active",x===b));
+  if(game.startsWith("target_")){
+    modes?.classList.remove("hidden");
+    $("targetRankModes")?.querySelectorAll(".rank-sub-game").forEach(x=>x.classList.toggle("active",x===b));
+    document.querySelector('[data-rank-game="target"]')?.classList.add("active");
+  }
+  loadLeaderboard();
+});$("refreshRanks").onclick=loadLeaderboard;$("difficulty").value=local.settings.difficulty;$("gridToggle").checked=local.settings.grid;$("soundToggle").checked=local.settings.sound;$("difficulty").onchange=e=>{local.settings.difficulty=e.target.value;save()};$("gridToggle").onchange=e=>{local.settings.grid=e.target.checked;save();drawSnake()};$("soundToggle").onchange=e=>{local.settings.sound=e.target.checked;save()};$("resetLocalBtn").onclick=()=>{if(confirm("Reset local high scores, coins, skins and settings?")){localStorage.removeItem("snakeArenaLocal");location.reload()}};
 if(sb)sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(user)loadProfile().then(updateUI);else{profile=null;updateUI()}});authMode(false);updateUI();loadSession();
 
 // Integrated external games
