@@ -130,6 +130,17 @@ window.addEventListener("message", async (event)=>{
     }catch(err){console.warn(`${game} score submit failed`,err);alert("Score could not be submitted: "+(err?.message||"Unknown error")+". Run the updated Supabase SQL migration, then try again.");}
   }
 });
+
+// Allow embedded games to return to the Snake Arena home screen.
+window.addEventListener("message", (event) => {
+  const d = event.data || {};
+  if (d.type === "snake-arena-game-home") {
+    const frames = ["targetRushFrame","highwayRushFrame","brickBlastFrame"];
+    if (!frames.some(id => $(id)?.contentWindow === event.source)) return;
+    show("home");
+  }
+});
+
 // Auth
 let signupMode=false;function authMode(s){signupMode=s;$("authTitle").textContent=s?"Create Account":"Login";$("authSubtitle").textContent=s?"Start your Snake Arena profile.":"Welcome back to Snake Arena.";$("usernameInput").classList.toggle("hidden",!s);$("authSubmit").textContent=s?"Sign Up":"Login";$("switchAuth").textContent=s?"I already have an account":"Create an account";$("authStatus").textContent=""}
 $("accountBtn").onclick=()=>{show("profile");if(!user)modal("authModal",true)};$("loginOpenBtn").onclick=()=>modal("authModal",true);$("closeAuth").onclick=()=>modal("authModal",false);$("switchAuth").onclick=()=>authMode(!signupMode);
@@ -206,6 +217,29 @@ $("towerRestartBtn")?.addEventListener("click",startTower);
 
 $("reactionArea")?.addEventListener("click",reactionTap);
 $("reactionRestartBtn")?.addEventListener("click",startReaction);
+
+
+// Result modal actions for the original games.
+// These are intentionally bound here (after the DOM is ready) so the
+// "Again" and "Home" buttons always work even after a game ends.
+const resultActions = [
+  ["playAgainBtn",      () => { modal("gameOverModal", false); startSnake(); }],
+  ["resultHomeBtn",     () => { modal("gameOverModal", false); show("home"); }],
+  ["birdyPlayAgainBtn", () => { modal("birdyOverModal", false); startBirdy(); }],
+  ["birdyResultHomeBtn",() => { modal("birdyOverModal", false); birdy.running=false; cancelAnimationFrame(birdy.raf); show("home"); }],
+  ["archeryPlayAgainBtn",() => { modal("archeryOverModal", false); startArchery(); }],
+  ["archeryResultHomeBtn",() => { modal("archeryOverModal", false); archery.running=false; cancelAnimationFrame(archery.raf); show("home"); }],
+  ["towerPlayAgainBtn", () => { modal("towerOverModal", false); startTower(); }],
+  ["towerResultHomeBtn",() => { modal("towerOverModal", false); tower.running=false; cancelAnimationFrame(tower.raf); show("home"); }],
+  ["reactionPlayAgainBtn",() => { modal("reactionResultModal", false); startReaction(); }],
+  ["reactionResultHomeBtn",() => { modal("reactionResultModal", false); clearTimeout(reaction.timer); reaction.state="idle"; show("home"); }],
+];
+resultActions.forEach(([id, fn]) => {
+  const el = $(id);
+  if (!el) return;
+  el.onclick = null;
+  el.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); fn(); });
+});
 
 // Keyboard controls for desktop.
 document.addEventListener("keydown",e=>{
