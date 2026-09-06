@@ -1,69 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#121722">
-<title>Snake Arena</title>
-<link rel="stylesheet" href="style.css?v=6">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#080b19">
+  <title>Target Rush</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="app">
-<header class="topbar"><div class="brand"><span class="brand-icon">🎮</span><div><b>Snake Arena</b><small>Play • Compete • Collect</small></div></div><button id="accountBtn" class="avatar-btn">👤</button></header>
-<nav class="tabs"><button data-page="home" class="tab active">🏠<span>Home</span></button><button data-page="shop" class="tab">🛒<span>Shop</span></button><button data-page="leaderboard" class="tab">🏆<span>Ranks</span></button><button data-page="profile" class="tab">👤<span>Profile</span></button></nav>
+<div id="app">
+  <header id="hud" class="hidden">
+    <div class="hudStats">
+      <div class="stat"><span>Score</span><b id="score">0</b></div>
+      <div class="stat"><span>Accuracy</span><b id="accuracy">100%</b></div>
+      <div class="stat"><span>Combo</span><b id="combo">x0</b></div>
+      <div class="stat timeStat"><span id="timeLabel">Time</span><b id="time">60</b></div>
+    </div>
+    <div class="hudActions">
+      <button id="pauseBtn" class="iconBtn" aria-label="Pause">❚❚</button>
+      <button id="soundBtn" class="iconBtn" aria-label="Sound">♪</button>
+      <button id="fullscreenBtn" class="iconBtn" aria-label="Fullscreen">⛶</button>
+    </div>
+  </header>
 
-<section id="homePage" class="page active"><div class="hero card">
-<div class="big-logo">🎮</div><p class="eyebrow">WELCOME TO THE ARENA</p><h1>Snake Arena</h1><p class="subtitle">Nine quick games. One profile. One shared coin wallet.</p>
-<div class="home-stats"><div><span>🏆 Best Snake</span><strong id="homeBest">0</strong></div><div><span>🪙 Coins</span><strong id="homeCoins">100</strong></div><div><span>🎮 Games</span><strong id="homeGames">0</strong></div></div>
-<div class="game-picker">
-<button id="playBtn" class="game-choice snake-choice"><span>🐍</span><b>Snake Arena</b><small>Swipe • Grow • Survive</small><em>Play →</em></button>
-<button id="playBirdyBtn" class="game-choice bird-choice"><span>🐦</span><b>Birdy Bird</b><small>Tap • Fly • Survive</small><em>Play →</em></button>
-<button id="playArcheryBtn" class="game-choice archery-choice"><span>🎯</span><b>Archery</b><small>Aim • Shoot • Score</small><em>Play →</em></button>
-<button id="playTowerBtn" class="game-choice tower-choice"><span>🏗️</span><b>Tower</b><small>Stack • Balance • Build</small><em>Play →</em></button>
-<button id="playReactionBtn" class="game-choice reaction-choice"><span>⚡</span><b>Reaction Time</b><small>Wait • React • Fast</small><em>Play →</em></button>
-<button id="playCatapultBtn" class="game-choice catapult-choice"><span>🏰</span><b>Catapult King</b><small>Aim • Launch • Conquer</small><em>Play →</em></button>
-<button id="playTargetRushBtn" class="game-choice target-choice"><span>🎯</span><b>Target Rush</b><small>Tap • Hit • Score</small><em>Play →</em></button>
-<button id="playHighwayRushBtn" class="game-choice highway-choice"><span>🏎️</span><b>Highway Rush</b><small>Race • Dodge • Collect</small><em>Play →</em></button>
-<button id="playBrickBlastBtn" class="game-choice brick-choice"><span>🧱</span><b>Brick Blast</b><small>Bounce • Break • Win</small><em>Play →</em></button>
-</div><button id="homeSettingsBtn" class="btn ghost">⚙ Game Settings</button>
-</div></section>
+  <main id="gameArea" aria-label="Target Rush game area">
+    <div id="gameGlow"></div>
+    <div id="screen" class="screen active">
+      <div class="homeCard">
+        <div class="crosshairLogo"><span></span></div>
+        <div class="eyebrow">PRECISION ARCADE</div>
+        <h1>TARGET <em>RUSH</em></h1>
+        <p>Tap fast. Build combos. Avoid the bombs.</p>
+        <button id="playBtn" class="primary">PLAY NOW <span>→</span></button>
+        <button id="leaderboardBtn" class="secondary">⌁ &nbsp; HIGH SCORES</button>
+      </div>
+      <div class="tips"><span>🎯 <b>Gold</b> bonus points</span><span>💣 Avoid bombs</span><span>⏱ Bonus time</span></div>
+    </div>
 
-<section id="gamePage" class="page"><div class="card game-card"><div class="game-head"><button id="backGameBtn" class="icon-btn">←</button><div class="game-title"><b>Snake Arena</b><small id="activeSkinName">Classic Snake</small></div><button id="pauseBtn" class="pause-btn">Pause</button></div><div class="score-grid"><div><span>Score</span><strong id="score">0</strong></div><div><span>Best</span><strong id="gameBest">0</strong></div><div><span>Coins</span><strong id="gameCoins">0</strong></div></div><div class="board-wrap"><canvas id="gameCanvas" width="600" height="600"></canvas><div id="comboText" class="float-text"></div></div><div id="gameMessage" class="game-message">Swipe or use the buttons.</div><div class="dpad"><button data-dir="up">▲</button><div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="restartBtn" class="btn ghost">↻ Restart Snake</button></div></section>
+    <div id="modeScreen" class="screen">
+      <div class="panel modePanel">
+        <div class="eyebrow">CHOOSE YOUR CHALLENGE</div>
+        <h2>SELECT MODE</h2>
+        <div class="modeGrid">
+          <button class="modeCard" data-mode="classic"><i>◎</i><strong>CLASSIC</strong><span>60 seconds of pure target action.</span></button>
+          <button class="modeCard" data-mode="time"><i>↯</i><strong>TIME ATTACK</strong><span>45 seconds. Chase the highest score.</span></button>
+          <button class="modeCard" data-mode="survival"><i>♥</i><strong>SURVIVAL</strong><span>Three lives. Pressure never stops.</span></button>
+        </div>
+        <button class="secondary backBtn">← &nbsp; BACK</button>
+      </div>
+    </div>
 
-<section id="birdyPage" class="page"><div class="card game-card birdy-card"><div class="game-head"><button id="backBirdyBtn" class="icon-btn">←</button><div class="game-title"><b>🐦 Birdy Bird</b><small>Tap to flap through the pipes</small></div><button id="birdyPauseBtn" class="pause-btn">Pause</button></div><div class="score-grid"><div><span>Score</span><strong id="birdyScore">0</strong></div><div><span>Best</span><strong id="birdyBest">0</strong></div><div><span>Coins</span><strong id="birdyCoins">0</strong></div></div><div class="board-wrap birdy-wrap"><canvas id="birdyCanvas" width="600" height="760"></canvas><div id="birdyStartHint" class="birdy-hint">Tap anywhere to start &amp; flap</div></div><div id="birdyMessage" class="game-message">Tap the screen to fly.</div><button id="birdyRestartBtn" class="btn ghost">↻ Restart Birdy Bird</button></div></section>
+    <div id="pauseScreen" class="screen overlay">
+      <div class="panel compactPanel"><div class="eyebrow">TAKE A BREATH</div><h2>PAUSED</h2><p>Your targets are waiting.</p><button id="resumeBtn" class="primary">RESUME</button><button id="quitBtn" class="secondary">QUIT GAME</button></div>
+    </div>
 
-<section id="archeryPage" class="page"><div class="card game-card special-card"><div class="game-head"><button id="backArcheryBtn" class="icon-btn">←</button><div class="game-title"><b>🎯 Archery</b><small>Aim at the moving target</small></div><button id="archeryPauseBtn" class="pause-btn">Pause</button></div><div class="score-grid"><div><span>Score</span><strong id="archeryScore">0</strong></div><div><span>Best</span><strong id="archeryBest">0</strong></div><div><span>Arrows</span><strong id="archeryArrows">10</strong></div></div><div class="board-wrap"><canvas id="archeryCanvas" width="600" height="720"></canvas><div id="archeryHint" class="canvas-hint">Tap the target to shoot</div></div><div id="archeryMessage" class="game-message">Hit the center for 50 points.</div><button id="archeryRestartBtn" class="btn ghost">↻ Restart Archery</button></div></section>
+    <div id="gameOverScreen" class="screen overlay">
+      <div class="panel compactPanel"><div class="eyebrow">ROUND COMPLETE</div><h2 id="gameOverTitle">GAME OVER</h2><div class="finalScore" id="finalScore">0</div><p id="finalStats"></p><button id="restartBtn" class="primary">PLAY AGAIN</button><button id="menuBtn" class="secondary">MAIN MENU</button></div>
+    </div>
 
-<section id="towerPage" class="page"><div class="card game-card special-card"><div class="game-head"><button id="backTowerBtn" class="icon-btn">←</button><div class="game-title"><b>🏗️ Tower</b><small>Stack the moving blocks</small></div><button id="towerPauseBtn" class="pause-btn">Pause</button></div><div class="score-grid"><div><span>Score</span><strong id="towerScore">0</strong></div><div><span>Best</span><strong id="towerBest">0</strong></div><div><span>Level</span><strong id="towerLevel">1</strong></div></div><div class="board-wrap"><canvas id="towerCanvas" width="600" height="720"></canvas><div id="towerHint" class="canvas-hint">Tap to drop the block</div></div><div id="towerMessage" class="game-message">Stack as high as you can.</div><button id="towerRestartBtn" class="btn ghost">↻ Restart Tower</button></div></section>
+    <div id="leaderboardScreen" class="screen overlay">
+      <div class="panel compactPanel"><div class="eyebrow">YOUR DEVICE</div><h2>HIGH SCORES</h2><ol id="highScoreList"></ol><button id="closeLeaderboardBtn" class="secondary">CLOSE</button></div>
+    </div>
 
-<section id="reactionPage" class="page"><div class="card game-card special-card"><div class="game-head"><button id="backReactionBtn" class="icon-btn">←</button><div class="game-title"><b>⚡ Reaction Time</b><small>React as fast as you can</small></div><div></div></div><div class="score-grid"><div><span>Last</span><strong id="reactionLast">—</strong></div><div><span>Best</span><strong id="reactionBest">—</strong></div><div><span>Coins</span><strong id="reactionCoins">0</strong></div></div><button id="reactionArea" class="reaction-area waiting"><span id="reactionBig">WAIT</span><small id="reactionSmall">Tap here to begin. Don't tap too early.</small></button><div id="reactionMessage" class="game-message">You will get a random GO signal.</div><button id="reactionRestartBtn" class="btn ghost">↻ Restart Reaction Test</button></div></section>
-
-<section id="catapultPage" class="page"><div class="card game-card special-card catapult-card">
-  <div class="game-head cat-game-head"><button id="backCatapultBtn" class="icon-btn">←</button><div class="game-title"><b>🏰 Catapult King</b><small>Aim • Launch • Conquer</small></div><div class="cat-head-actions"><button id="cat_fullscreenBtn" class="cat-head-btn" type="button">⛶</button><button id="cat_pauseBtn" class="pause-btn">Pause</button></div></div>
-  <div class="score-grid catapult-score-grid"><div><span>Level</span><strong id="cat_level">1 / 40</strong></div><div><span>Score</span><strong id="cat_score">0</strong></div><div><span>Shots</span><strong id="cat_shots">6</strong></div><div><span>Best</span><strong id="cat_best">0</strong></div></div>
-  <section class="cat-stage-card"><div class="cat-stage-header"><span id="cat_status">Select ammo, pull back and release.</span><span id="cat_targetInfo">🎯 2 targets</span></div><div class="cat-stage-wrap"><canvas id="cat_game" width="960" height="640"></canvas><div id="cat_hint" class="cat-hint"><b>Drag the ammo backward</b><span>Release to fire</span></div><div id="cat_toast" class="cat-toast"></div></div></section>
-  <section class="cat-control-panel"><div class="cat-panel-title"><span>AMMUNITION</span><small>Tap a shot to select</small></div><div id="cat_ammoRow" class="cat-ammo-grid"></div><div class="cat-power-row"><span>POWER</span><div class="cat-power"><i id="cat_powerBar"></i></div></div><div class="cat-bottom-actions"><button id="cat_trajectoryBtn" class="cat-control">Trajectory <b id="cat_trajectoryState">ON</b></button><button id="cat_nextBtn" class="cat-control cat-next">Next Level <b>›</b></button><button id="cat_restartBtn" class="cat-control">↻ Restart</button></div></section>
+    <div id="comboFlash">COMBO!</div>
+    <div id="toast"></div>
+  </main>
 </div>
-<div id="cat_result" class="cat-result-overlay"><div class="cat-result-card"><div class="cat-result-icon" id="cat_resultIcon">🏆</div><div class="eyebrow">BATTLE COMPLETE</div><h2 id="cat_resultTitle">Battle Over</h2><div class="cat-result-score" id="cat_resultScore">0</div><div class="cat-result-meta"><span id="cat_resultShots">0 shots left</span><span id="cat_resultBonus">+0 bonus</span></div><button id="cat_againBtn" class="btn primary">Play Again</button><button id="cat_resultHomeBtn" class="btn ghost">Home</button></div></div>
-</section>
-
-
-<section id="targetRushPage" class="page external-game-page"><div class="external-game-head"><button class="icon-btn external-back" data-external-back>←</button><div><b>🎯 Target Rush</b><small>Fast-paced target shooter</small></div><button class="external-fullscreen" data-fullscreen="targetRushFrame">⛶</button></div><iframe id="targetRushFrame" class="external-game-frame" src="target-rush/index.html" title="Target Rush" allow="fullscreen"></iframe></section>
-<section id="highwayRushPage" class="page external-game-page"><div class="external-game-head"><button class="icon-btn external-back" data-external-back>←</button><div><b>🏎️ Highway Rush</b><small>High-speed endless racing</small></div><button class="external-fullscreen" data-fullscreen="highwayRushFrame">⛶</button></div><iframe id="highwayRushFrame" class="external-game-frame" src="highway-rush/index.html" title="Highway Rush" allow="fullscreen"></iframe></section>
-<section id="brickBlastPage" class="page external-game-page"><div class="external-game-head"><button class="icon-btn external-back" data-external-back>←</button><div><b>🧱 Brick Blast</b><small>Classic brick breaker</small></div><button class="external-fullscreen" data-fullscreen="brickBlastFrame">⛶</button></div><iframe id="brickBlastFrame" class="external-game-frame" src="brick-blast/index.html" title="Brick Blast" allow="fullscreen"></iframe></section>
-<section id="shopPage" class="page"><div class="page-head"><div><p class="eyebrow">CUSTOMIZE</p><h2>Snake Shop</h2></div><div class="coin-pill">🪙 <b id="shopCoins">0</b></div></div><div id="shopGrid" class="shop-grid"></div></section>
-<section id="leaderboardPage" class="page"><div class="page-head"><div><p class="eyebrow">COMPETE</p><h2>Global Ranks</h2></div><button id="refreshRanks" class="mini-btn">↻ Refresh</button></div><div class="rank-switch wide"><button class="rank-game active" data-rank-game="snake">🐍 Snake</button><button class="rank-game" data-rank-game="birdy">🐦 Birdy</button><button class="rank-game" data-rank-game="archery">🎯 Archery</button><button class="rank-game" data-rank-game="tower">🏗️ Tower</button><button class="rank-game" data-rank-game="reaction">⚡ Reaction</button><button class="rank-game" data-rank-game="catapult">🏰 Catapult</button><button class="rank-game" data-rank-game="target">🎯 Target Rush</button><button class="rank-game" data-rank-game="highway">🏎️ Highway Rush</button><button class="rank-game" data-rank-game="brick">🧱 Brick Blast</button></div><div class="rank-note" id="rankNote">Sign in to submit scores to the global leaderboard.</div><div class="card table-card"><div class="table-head"><span>#</span><span>Player</span><span id="rankScoreLabel">Score</span></div><div id="leaderboardList"></div></div></section>
-<section id="profilePage" class="page"><div class="page-head"><div><p class="eyebrow">ACCOUNT</p><h2>Profile</h2></div></div><div id="profileLoggedOut" class="card auth-card"><div class="profile-icon">👤</div><h3>Sign in to save your progress</h3><p>Create an account to sync your profile, coins, and scores.</p><button id="loginOpenBtn" class="btn primary">Login / Sign Up</button></div><div id="profileLoggedIn" class="profile-wrap hidden"><div class="card profile-card"><div class="profile-top"><div id="profileAvatar" class="profile-avatar">🐍</div><div><h3 id="profileUsername">Player</h3><p id="profileEmail"></p></div></div><div class="profile-stats"><div><span>🏆 Best</span><b id="profileBest">0</b></div><div><span>🪙 Coins</span><b id="profileCoins">0</b></div><div><span>🎮 Games</span><b id="profileGames">0</b></div><div><span>🐍 Skin</span><b id="profileSkin">Classic</b></div></div></div><div class="card profile-actions"><button id="editProfileBtn" class="btn ghost">✏ Edit Profile</button><button id="logoutBtn" class="btn danger">Log Out</button></div></div></section>
-<section id="settingsPage" class="page"><div class="page-head"><div><p class="eyebrow">PREFERENCES</p><h2>Settings</h2></div></div><div class="card settings-card"><div class="setting"><div><b>Difficulty</b><small>Game speed / challenge</small></div><select id="difficulty"><option value="easy">Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></div><div class="setting"><div><b>Grid</b><small>Show Snake board lines</small></div><label class="switch"><input id="gridToggle" type="checkbox"><span></span></label></div><div class="setting"><div><b>Sound</b><small>Game sounds</small></div><label class="switch"><input id="soundToggle" type="checkbox"><span></span></label></div><button id="resetLocalBtn" class="btn danger">Reset Local Game Data</button></div></section>
-</div>
-
-<div id="authModal" class="modal"><div class="modal-card auth-modal"><button id="closeAuth" class="modal-close">×</button><div class="modal-icon">👤</div><h2 id="authTitle">Login</h2><p id="authSubtitle">Welcome back to Snake Arena.</p><form id="authForm"><input id="usernameInput" class="auth-user hidden" type="text" placeholder="Username (sign up only)" maxlength="20"><input id="emailInput" type="email" placeholder="Email" required><input id="passwordInput" type="password" placeholder="Password" minlength="6" required><button class="btn primary" type="submit" id="authSubmit">Login</button></form><button id="switchAuth" class="text-btn">Create an account</button><div id="authStatus" class="status"></div></div></div>
-<div id="editModal" class="modal"><div class="modal-card"><button class="modal-close" id="closeEdit">×</button><div class="modal-icon">✏️</div><h2>Edit Profile</h2><input id="editUsername" type="text" maxlength="20" placeholder="Username"><input id="editAvatar" type="text" maxlength="4" placeholder="Emoji avatar, e.g. 🐍"><button id="saveProfileBtn" class="btn primary">Save Profile</button><div id="editStatus" class="status"></div></div></div>
-<div id="gameOverModal" class="modal"><div class="modal-card result-card"><div class="modal-icon">🏁</div><h2>Snake Run Complete</h2><p>Your score</p><strong id="finalScore">0</strong><div id="resultEarned" class="earned">+0 🪙</div><button id="playAgainBtn" class="btn primary">Play Again</button><button id="resultHomeBtn" class="btn ghost">Home</button></div></div>
-<div id="birdyOverModal" class="modal"><div class="modal-card result-card"><div class="modal-icon">🐦</div><h2>Flight Complete</h2><p>Your Birdy score</p><strong id="birdyFinalScore">0</strong><div id="birdyResultEarned" class="earned">+0 🪙</div><button id="birdyPlayAgainBtn" class="btn primary">Fly Again</button><button id="birdyResultHomeBtn" class="btn ghost">Home</button></div></div>
-<div id="archeryOverModal" class="modal"><div class="modal-card result-card"><div class="modal-icon">🎯</div><h2>Archery Complete</h2><p>Your score</p><strong id="archeryFinalScore">0</strong><div id="archeryResultEarned" class="earned">+0 🪙</div><button id="archeryPlayAgainBtn" class="btn primary">Shoot Again</button><button id="archeryResultHomeBtn" class="btn ghost">Home</button></div></div>
-<div id="towerOverModal" class="modal"><div class="modal-card result-card"><div class="modal-icon">🏗️</div><h2>Tower Complete</h2><p>Blocks stacked</p><strong id="towerFinalScore">0</strong><div id="towerResultEarned" class="earned">+0 🪙</div><button id="towerPlayAgainBtn" class="btn primary">Build Again</button><button id="towerResultHomeBtn" class="btn ghost">Home</button></div></div>
-<div id="reactionResultModal" class="modal"><div class="modal-card result-card"><div class="modal-icon">⚡</div><h2>Reaction Result</h2><p>Your reaction time</p><strong id="reactionFinal">—</strong><div id="reactionResultEarned" class="earned">+0 🪙</div><button id="reactionPlayAgainBtn" class="btn primary">Try Again</button><button id="reactionResultHomeBtn" class="btn ghost">Home</button></div></div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js?v=2"></script><script src="app.js?v=6"></script><script src="catapult.js?v=7"></script>
-</body></html>
+<script src="script.js"></script>
+</body>
+</html>
