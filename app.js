@@ -147,7 +147,6 @@ document.querySelectorAll(".tab[data-page]").forEach(tab=>{
 // Settings/ranks
 document.querySelectorAll("[data-rank-game]").forEach(b=>b.onclick=()=>{activeRankGame=b.dataset.rankGame;document.querySelectorAll("[data-rank-game]").forEach(x=>x.classList.toggle("active",x===b));loadLeaderboard()});$("refreshRanks").onclick=loadLeaderboard;$("difficulty").value=local.settings.difficulty;$("gridToggle").checked=local.settings.grid;$("soundToggle").checked=local.settings.sound;$("difficulty").onchange=e=>{local.settings.difficulty=e.target.value;save()};$("gridToggle").onchange=e=>{local.settings.grid=e.target.checked;save();drawSnake()};$("soundToggle").onchange=e=>{local.settings.sound=e.target.checked;save()};$("resetLocalBtn").onclick=()=>{if(confirm("Reset local high scores, coins, skins and settings?")){localStorage.removeItem("snakeArenaLocal");location.reload()}};
 if(sb)sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(user)loadProfile().then(updateUI);else{profile=null;updateUI()}});authMode(false);updateUI();loadSession();
-});
 
 // Integrated external games
 (function(){
@@ -158,3 +157,5 @@ if(sb)sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(u
   document.querySelectorAll('[data-external-back]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('homePage').classList.add('active');}));
   document.querySelectorAll('[data-fullscreen]').forEach(btn=>btn.addEventListener('click',()=>{const f=document.getElementById(btn.dataset.fullscreen); (f.requestFullscreen||f.webkitRequestFullscreen)?.call(f);}));
 })();
+
+});
