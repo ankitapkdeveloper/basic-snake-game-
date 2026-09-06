@@ -136,7 +136,18 @@ $("accountBtn").onclick=()=>{show("profile");if(!user)modal("authModal",true)};$
 $("authForm").onsubmit=async e=>{e.preventDefault();if(!sb){$("authStatus").textContent="Add your Supabase URL and publishable key in config.js first.";return}$("authStatus").textContent="";const email=$("emailInput").value.trim(),password=$("passwordInput").value;let res;if(signupMode){const username=$("usernameInput").value.trim()||email.split("@")[0];res=await sb.auth.signUp({email,password,options:{data:{username},emailRedirectTo:location.origin+location.pathname}});if(!res.error&&res.data.user)$("authStatus").textContent=res.data.session?"Account created.":"Check your email to confirm your account."}else res=await sb.auth.signInWithPassword({email,password});if(res.error){$("authStatus").textContent=res.error.message;return}if(res.data?.session){user=res.data.user;await loadProfile();updateUI();modal("authModal",false);show("profile")}};
 $("logoutBtn").onclick=async()=>{if(sb)await sb.auth.signOut();user=null;profile=null;updateUI();show("home")};$("editProfileBtn").onclick=()=>{$("editUsername").value=profile?.username||"";$("editAvatar").value=profile?.avatar_url||"🐍";modal("editModal",true)};$("closeEdit").onclick=()=>modal("editModal",false);$("saveProfileBtn").onclick=async()=>{if(!sb||!user){$("editStatus").textContent="Login is required.";return}const {data,error}=await sb.from("profiles").update({username:$("editUsername").value.trim()||"Player",avatar_url:$("editAvatar").value.trim()||"🐍"}).eq("id",user.id).select().single();if(error){$("editStatus").textContent=error.message;return}profile=data;updateUI();modal("editModal",false)};
 
-// Main navigation: bind every tab explicitly (Shop, Ranks and Profile were missing these handlers).
+// Main game launchers: keep all nine game buttons wired after integration.
+const gameLaunchers={
+  playBtn:()=>startSnake(),
+  playBirdyBtn:()=>startBirdy(),
+  playArcheryBtn:()=>startArchery(),
+  playTowerBtn:()=>startTower(),
+  playReactionBtn:()=>startReaction(),
+  playCatapultBtn:()=>{show("catapult");startCatapultGame();},
+};
+Object.entries(gameLaunchers).forEach(([id,fn])=>{const el=$(id);if(el)el.onclick=fn});
+
+// Main navigation: bind every tab explicitly.
 document.querySelectorAll(".tab[data-page]").forEach(tab=>{
   tab.addEventListener("click",()=>{
     const page=tab.dataset.page;
@@ -150,12 +161,28 @@ if(sb)sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(u
 
 // Integrated external games
 (function(){
-  const openExternal=(pageId)=>{ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(pageId).classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); };
-  document.getElementById('playTargetRushBtn')?.addEventListener('click',()=>openExternal('targetRushPage'));
-  document.getElementById('playHighwayRushBtn')?.addEventListener('click',()=>openExternal('highwayRushPage'));
-  document.getElementById('playBrickBlastBtn')?.addEventListener('click',()=>openExternal('brickBlastPage'));
-  document.querySelectorAll('[data-external-back]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('homePage').classList.add('active');}));
-  document.querySelectorAll('[data-fullscreen]').forEach(btn=>btn.addEventListener('click',()=>{const f=document.getElementById(btn.dataset.fullscreen); (f.requestFullscreen||f.webkitRequestFullscreen)?.call(f);}));
+  const openExternal=(pageId,loaderName)=>{
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const page=document.getElementById(pageId);
+    if(page) page.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+    setTimeout(()=>{try{window[loaderName]?.()}catch(e){console.error('Embedded game load failed',e)}},0);
+  };
+  document.getElementById('playTargetRushBtn')?.addEventListener('click',()=>openExternal('targetRushPage','__loadTargetRush'));
+  document.getElementById('playHighwayRushBtn')?.addEventListener('click',()=>openExternal('highwayRushPage','__loadHighwayRush'));
+  document.getElementById('playBrickBlastBtn')?.addEventListener('click',()=>openExternal('brickBlastPage','__loadBrickBlast'));
+  document.querySelectorAll('[data-external-back]').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('homePage').classList.add('active');
+  }));
+  document.querySelectorAll('[data-fullscreen]').forEach(btn=>btn.addEventListener('click',()=>{
+    const f=document.getElementById(btn.dataset.fullscreen);
+    (f?.requestFullscreen||f?.webkitRequestFullscreen)?.call(f);
+  }));
 })();
 
 });
+
+// In-game back buttons for the original six games.
+const backHomeMap={backGameBtn:'game',backBirdyBtn:'birdy',backArcheryBtn:'archery',backTowerBtn:'tower',backReactionBtn:'reaction',backCatapultBtn:'catapult'};
+Object.keys(backHomeMap).forEach(id=>{const el=$(id);if(el)el.onclick=()=>show('home')});
