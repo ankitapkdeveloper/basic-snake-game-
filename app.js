@@ -53,19 +53,34 @@ async function endTower(){if(!tower.running)return;tower.running=false;cancelAni
 let reaction={state:"idle",start:0,timer:null,raf:null};function startReaction(){modal("reactionResultModal",false);show("reaction");reaction={state:"waiting",start:0,timer:null,raf:null};$("reactionArea").className="reaction-area waiting";$("reactionBig").textContent="WAIT";$("reactionSmall").textContent="Get ready…";$("reactionMessage").textContent="Tap only after GO appears.";clearTimeout(reaction.timer);reaction.timer=setTimeout(()=>{if(reaction.state!=="waiting")return;reaction.state="ready";reaction.start=performance.now();$("reactionArea").className="reaction-area ready";$("reactionBig").textContent="GO!";$("reactionSmall").textContent="TAP NOW";beep(880)},900+Math.random()*2600)}
 async function reactionTap(){if($("reactionPage").classList.contains("active")===false)return;if(reaction.state==="idle"){startReaction();return}if(reaction.state==="waiting"){clearTimeout(reaction.timer);reaction.state="tooSoon";$("reactionArea").className="reaction-area too-soon";$("reactionBig").textContent="TOO EARLY";$("reactionSmall").textContent="Wait for GO before tapping.";$("reactionMessage").textContent="Restart and try again.";beep(160);return}if(reaction.state==="ready"){const ms=Math.round(performance.now()-reaction.start);reaction.state="result";$("reactionArea").className="reaction-area result";$("reactionBig").textContent=ms+" ms";$("reactionSmall").textContent=ms<250?"Incredible reaction!":ms<400?"Great reaction!":"Keep practicing!";$("reactionLast").textContent=ms+" ms";const better=local.reactionBest==null||ms<local.reactionBest;if(better)local.reactionBest=ms;local.reactionGames++;const earned=ms<300?10:ms<500?5:3;if(!(sb&&user))local.coins+=earned;save();updateUI();$("reactionFinal").textContent=ms+" ms";$("reactionResultEarned").textContent=`+${earned} 🪙`;if(sb&&user){await sb.rpc("submit_reaction_score",{p_ms:ms});await loadProfile();updateUI()}setTimeout(()=>modal("reactionResultModal",true),300)}}
 
-async function loadLeaderboard(){const list=$("leaderboardList");if(!list)return;list.innerHTML='<div class="rank-row"><span>…</span><span>Loading…</span><strong>—</strong></div>';if(!sb){$("rankNote").textContent="Offline mode: connect Supabase for global rankings.";list.innerHTML='<div class="rank-row"><span>—</span><span>Connect Supabase for online ranks</span><strong>—</strong></div>';return}const table={snake:"leaderboard",birdy:"birdy_leaderboard",archery:"archery_leaderboard",tower:"tower_leaderboard",reaction:"reaction_leaderboard",catapult:"catapult_leaderboard",target:"target_rush_leaderboard",highway:"highway_rush_leaderboard",brick:"brick_blast_leaderboard"}[activeRankGame];$("rankNote").textContent=user?`Your ${activeRankGame} scores are submitted after each run.`:"Sign in to submit scores to the global leaderboard.";$("rankScoreLabel").textContent=activeRankGame==="reaction"?"TIME":"SCORE";const q=sb.from(table).select("score,username,avatar_url").order("score",{ascending:activeRankGame==="reaction"}).limit(50);const {data,error}=await q;if(error){list.innerHTML=`<div class="rank-row"><span>!</span><span>${esc(error.message.includes("does not exist")?"Run the latest supabase-schema.sql first.":error.message)}</span><strong>—</strong></div>`;return}if(!data?.length){list.innerHTML='<div class="rank-row"><span>—</span><span>No scores yet</span><strong>—</strong></div>';return}list.innerHTML=data.map((r,i)=>`<div class="rank-row"><span>${i<3?["🥇","🥈","🥉"][i]:i+1}</span><span class="rank-player"><span class="rank-avatar">${esc(r.avatar_url||"🎮")}</span>${esc(r.username||"Player")}</span><strong class="rank-score">${r.score}${activeRankGame==="reaction"?" ms":""}</strong></div>`).join("")}
-function beep(freq){if(!local.settings.sound)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=freq;g.gain.setValueAtTime(.05,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.12);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.13)}catch(e){}}
-
-// Navigation/events
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>show(b.dataset.page));$("playBtn").onclick=startSnake;$("playBirdyBtn").onclick=startBirdy;$("playArcheryBtn").onclick=startArchery;$("playTowerBtn").onclick=startTower;$("playReactionBtn").onclick=()=>startReaction();$("playCatapultBtn").onclick=()=>{show("catapult");window.CatapultIntegrationBest=local.catapultHighScore;window.startCatapultGame?.()};$("homeSettingsBtn").onclick=()=>show("settings");
-$("backGameBtn").onclick=()=>{clearInterval(timer);running=false;show("home")};$("backBirdyBtn").onclick=()=>{birdy.running=false;cancelAnimationFrame(birdy.raf);show("home")};$("backArcheryBtn").onclick=()=>{archery.running=false;cancelAnimationFrame(archery.raf);show("home")};$("backTowerBtn").onclick=()=>{tower.running=false;cancelAnimationFrame(tower.raf);show("home")};$("backReactionBtn").onclick=()=>{clearTimeout(reaction.timer);show("home")};$("backCatapultBtn").onclick=()=>{window.stopCatapultGame?.();show("home")};
-$("pauseBtn").onclick=()=>{if(!running)return;paused=!paused;$("pauseBtn").textContent=paused?"Resume":"Pause"};$("birdyPauseBtn").onclick=()=>{if(!birdy.running)return;birdy.paused=!birdy.paused;$("birdyPauseBtn").textContent=birdy.paused?"Resume":"Pause"};$("archeryPauseBtn").onclick=()=>{if(!archery.running)return;archery.paused=!archery.paused;$("archeryPauseBtn").textContent=archery.paused?"Resume":"Pause"};$("towerPauseBtn").onclick=()=>{if(!tower.running)return;tower.paused=!tower.paused;$("towerPauseBtn").textContent=tower.paused?"Resume":"Pause"};
-$("restartBtn").onclick=startSnake;$("birdyRestartBtn").onclick=startBirdy;$("archeryRestartBtn").onclick=startArchery;$("towerRestartBtn").onclick=startTower;$("reactionRestartBtn").onclick=startReaction;
-$("playAgainBtn").onclick=startSnake;$("resultHomeBtn").onclick=()=>{modal("gameOverModal",false);show("home")};$("birdyPlayAgainBtn").onclick=startBirdy;$("birdyResultHomeBtn").onclick=()=>{modal("birdyOverModal",false);show("home")};$("archeryPlayAgainBtn").onclick=startArchery;$("archeryResultHomeBtn").onclick=()=>{modal("archeryOverModal",false);show("home")};$("towerPlayAgainBtn").onclick=startTower;$("towerResultHomeBtn").onclick=()=>{modal("towerOverModal",false);show("home")};$("reactionPlayAgainBtn").onclick=startReaction;$("reactionResultHomeBtn").onclick=()=>{modal("reactionResultModal",false);show("home")};
-document.querySelectorAll("[data-dir]").forEach(b=>b.onclick=()=>setDir(b.dataset.dir));document.addEventListener("keydown",e=>{const k={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"}[e.key];if(k){e.preventDefault();setDir(k)}if(e.code==="Space"){if($("birdyPage").classList.contains("active")){e.preventDefault();flap()}else if($("towerPage").classList.contains("active")){e.preventDefault();dropTower()}}});
-canvas.addEventListener("touchstart",e=>{const t=e.changedTouches[0];touchX=t.clientX;touchY=t.clientY},{passive:true});canvas.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-touchX,dy=t.clientY-touchY;if(Math.max(Math.abs(dx),Math.abs(dy))<25)return;if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?"right":"left");else setDir(dy>0?"down":"up")},{passive:true});
-birdyCanvas.addEventListener("pointerdown",e=>{e.preventDefault();flap()});ac.addEventListener("pointerdown",e=>{e.preventDefault();shootArchery(e)});tc.addEventListener("pointerdown",e=>{e.preventDefault();dropTower()});$("reactionArea").addEventListener("pointerdown",e=>{e.preventDefault();reactionTap()});
-
+async function loadLeaderboard(){
+  const list=$("leaderboardList");if(!list)return;
+  list.innerHTML='<div class="rank-row"><span>…</span><span>Loading…</span><strong>—</strong></div>';
+  if(!sb){
+    $("rankNote").textContent="Offline mode: connect Supabase for global rankings.";
+    list.innerHTML='<div class="rank-row"><span>—</span><span>Connect Supabase for online ranks</span><strong>—</strong></div>';return;
+  }
+  const tableMap={
+    snake:"leaderboard",birdy:"birdy_leaderboard",archery:"archery_leaderboard",tower:"tower_leaderboard",
+    reaction:"reaction_leaderboard",catapult:"catapult_leaderboard",
+    target_classic:"target_rush_classic_leaderboard",target_time:"target_rush_time_leaderboard",
+    target_survival:"target_rush_survival_leaderboard",
+    highway:"highway_rush_leaderboard",brick:"brick_blast_leaderboard"
+  };
+  const labelMap={
+    snake:"Snake",birdy:"Birdy",archery:"Archery",tower:"Tower",reaction:"Reaction",catapult:"Catapult",
+    target_classic:"Target Rush Classic",target_time:"Target Rush Time Attack",target_survival:"Target Rush Survival",
+    highway:"Highway Rush",brick:"Brick Blast"
+  };
+  const table=tableMap[activeRankGame];
+  if(!table){list.innerHTML='<div class="rank-row"><span>!</span><span>Unknown leaderboard</span><strong>—</strong></div>';return;}
+  $("rankNote").textContent=user?`Your ${labelMap[activeRankGame]||activeRankGame} scores are submitted after each run.`:"Sign in to submit scores to the global leaderboard.";
+  $("rankScoreLabel").textContent=activeRankGame==="reaction"?"TIME":"SCORE";
+  const {data,error}=await sb.from(table).select("score,username,avatar_url").order("score",{ascending:activeRankGame==="reaction"}).limit(50);
+  if(error){list.innerHTML=`<div class="rank-row"><span>!</span><span>${esc(error.message.includes("does not exist")?"Run the NEW leaderboard SQL migration first.":error.message)}</span><strong>—</strong></div>`;return;}
+  if(!data?.length){list.innerHTML='<div class="rank-row"><span>—</span><span>No scores yet</span><strong>—</strong></div>';return;}
+  list.innerHTML=data.map((r,i)=>`<div class="rank-row"><span>${i<3?["🥇","🥈","🥉"][i]:i+1}</span><span class="rank-player"><span class="rank-avatar">${esc(r.avatar_url||"🎮")}</span>${esc(r.username||"Player")}</span><strong class="rank-score">${r.score}${activeRankGame==="reaction"?" ms":""}</strong></div>`).join("");
+}
 // Catapult King integration event
 window.addEventListener("catapult-game-finished",async e=>{const {score=0}=e.detail||{};local.catapultGames++;local.games++;const earned=Math.max(2,Math.floor(score/80));if(score>local.catapultHighScore)local.catapultHighScore=score;if(!(sb&&user))local.coins+=earned;save();updateUI();if(sb&&user){try{await sb.rpc("submit_catapult_score",{p_score:score});await loadProfile();updateUI()}catch(err){console.warn("Catapult score submit failed",err)}}});
 window.addEventListener("catapult-go-home",()=>show("home"));
@@ -80,21 +95,41 @@ window.addEventListener("message", async (event)=>{
   const d=event.data||{};
   if(d.type!=="snake-arena-game-finished" || !["target","highway","brick"].includes(d.game)) return;
   if(expected[d.game] && event.source!==expected[d.game]) return;
+
   const score=Math.max(0,Math.min(1000000,Math.floor(Number(d.score)||0)));
   const game=d.game;
-  const keys={target:["targetGames","targetHighScore","submit_target_rush_score"],highway:["highwayGames","highwayHighScore","submit_highway_rush_score"],brick:["brickGames","brickHighScore","submit_brick_blast_score"]}[game];
-  local[keys[0]]++; local.games++; if(score>local[keys[1]]) local[keys[1]]=score;
-  if(!(sb&&user)){
-    const reward=game==="target"?Math.floor(score/100):game==="highway"?Math.floor(score/75):Math.floor(score/25);
-    local.coins+=Math.max(0,reward);
+  let rpcName,localGameKey,localHighKey,reward;
+  if(game==="target"){
+    const mode=String(d.mode||"classic").toLowerCase();
+    const targetModes={
+      classic:{rpc:"submit_target_rush_classic_score",key:"targetClassic"},
+      time:{rpc:"submit_target_rush_time_score",key:"targetTime"},
+      survival:{rpc:"submit_target_rush_survival_score",key:"targetSurvival"}
+    };
+    const info=targetModes[mode]||targetModes.classic;
+    rpcName=info.rpc; localGameKey=info.key+"Games"; localHighKey=info.key+"HighScore";
+    reward=Math.floor(score/100);
+  }else if(game==="highway"){
+    rpcName="submit_highway_rush_score";localGameKey="highwayGames";localHighKey="highwayHighScore";reward=Math.floor(score/75);
+  }else{
+    rpcName="submit_brick_blast_score";localGameKey="brickGames";localHighKey="brickHighScore";reward=Math.floor(score/25);
   }
-  save(); updateUI();
+
+  local[localGameKey]=Number(local[localGameKey]||0)+1;
+  local.games=Number(local.games||0)+1;
+  if(score>Number(local[localHighKey]||0)) local[localHighKey]=score;
+  if(!(sb&&user)) local.coins=Number(local.coins||0)+Math.max(0,reward);
+  save();updateUI();
+
   if(sb&&user){
-    try{await sb.rpc(keys[2],{p_score:score});await loadProfile();updateUI()}
-    catch(err){console.warn(`${game} score submit failed`,err)}
+    try{
+      const {error}=await sb.rpc(rpcName,{p_score:score});
+      if(error) throw error;
+      await loadProfile();updateUI();
+      if($("leaderboardPage")?.classList.contains("active")) loadLeaderboard();
+    }catch(err){console.warn(`${game} score submit failed`,err);alert("Score could not be submitted: "+(err?.message||"Unknown error")+". Run the updated Supabase SQL migration, then try again.");}
   }
 });
-
 // Auth
 let signupMode=false;function authMode(s){signupMode=s;$("authTitle").textContent=s?"Create Account":"Login";$("authSubtitle").textContent=s?"Start your Snake Arena profile.":"Welcome back to Snake Arena.";$("usernameInput").classList.toggle("hidden",!s);$("authSubmit").textContent=s?"Sign Up":"Login";$("switchAuth").textContent=s?"I already have an account":"Create an account";$("authStatus").textContent=""}
 $("accountBtn").onclick=()=>{show("profile");if(!user)modal("authModal",true)};$("loginOpenBtn").onclick=()=>modal("authModal",true);$("closeAuth").onclick=()=>modal("authModal",false);$("switchAuth").onclick=()=>authMode(!signupMode);
