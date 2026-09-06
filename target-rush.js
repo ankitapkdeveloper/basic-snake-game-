@@ -13,16 +13,15 @@
   const source='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><style>'+css+'</style></head><body>'+body+'<script>'+gameScript.replace(/<\/script/gi,'<\\/script')+'<\/script></body></html>';
   window.__loadTargetRush=()=>{
     try{
-      frame.removeAttribute('srcdoc');
-      frame.src='about:blank';
-      const doc=frame.contentDocument;
-      if(!doc) throw new Error('iframe document unavailable');
-      doc.open(); doc.write(source); doc.close();
+      // Use native srcdoc so the embedded document gets a normal browsing
+      // context and its canvas/input/event loop works reliably on mobile.
+      frame.srcdoc=source;
       frame.style.background='#050713';
       frame.style.visibility='visible';
     }catch(err){
-      console.error('target-rush embed error',err);
-      frame.srcdoc=source;
+      console.error('target-rush.js embed error',err);
+      frame.removeAttribute('srcdoc');
+      frame.src='about:blank';
     }
   };
   window.__loadTargetRush();

@@ -33,3 +33,9 @@ The integrated build now loads `catapult.js` after the app scripts (required for
 
 ## Single-file game structure
 The three new games are stored as root JavaScript files: target-rush.js, highway-rush.js, and brick-blast.js. Do not create separate game folders. Keep all files together in the repository root.
+
+
+## V3 gameplay repair
+- Restored touch/mouse/keyboard controls for the original six games.
+- Fixed the Brick Blast animation loop so it does not die before the first game starts.
+- New games now load through native iframe `srcdoc` for reliable execution.

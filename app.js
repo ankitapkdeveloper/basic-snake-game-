@@ -143,17 +143,83 @@ const gameLaunchers={
   playArcheryBtn:()=>startArchery(),
   playTowerBtn:()=>startTower(),
   playReactionBtn:()=>startReaction(),
-  playCatapultBtn:()=>{show("catapult");startCatapultGame();},
+  playCatapultBtn:()=>{show("catapult");window.startCatapultGame?.();},
 };
-Object.entries(gameLaunchers).forEach(([id,fn])=>{const el=$(id);if(el)el.onclick=fn});
+Object.entries(gameLaunchers).forEach(([id,fn])=>{
+  const el=$(id);
+  if(el){
+    el.onclick=null;
+    el.addEventListener("click",e=>{e.preventDefault();fn()});
+  }
+});
 
 // Main navigation: bind every tab explicitly.
 document.querySelectorAll(".tab[data-page]").forEach(tab=>{
-  tab.addEventListener("click",()=>{
+  tab.addEventListener("click",e=>{
+    e.preventDefault();
     const page=tab.dataset.page;
     if(page) show(page);
   });
 });
+
+// Restore the original six games' gameplay controls.
+document.querySelectorAll("[data-dir]").forEach(btn=>{
+  const d=btn.dataset.dir;
+  btn.addEventListener("pointerdown",e=>{e.preventDefault();setDir(d)},{passive:false});
+  btn.addEventListener("click",e=>{e.preventDefault();setDir(d)});
+});
+$("restartBtn")?.addEventListener("click",()=>startSnake());
+$("gameCanvas")?.addEventListener("pointerdown",e=>{
+  if(!running || paused) return;
+  // Tap left/right half of the snake board to turn relative to current heading.
+  const r=$("gameCanvas").getBoundingClientRect(),x=e.clientX-r.left;
+  const center=r.width/2;
+  if(Math.abs(x-center)<r.width*.16) return;
+  const left = x<center;
+  if(dir.x!==0) setDir(left?"up":"down");
+  else setDir(left?"left":"right");
+},{passive:true});
+
+$("birdyCanvas")?.addEventListener("pointerdown",e=>{e.preventDefault();flap()},{passive:false});
+$("birdyPauseBtn")?.addEventListener("click",()=>{
+  if(!birdy.running)return;
+  birdy.paused=!birdy.paused;
+  $("birdyPauseBtn").textContent=birdy.paused?"Resume":"Pause";
+});
+$("birdyRestartBtn")?.addEventListener("click",startBirdy);
+
+$("archeryCanvas")?.addEventListener("pointerdown",e=>{e.preventDefault();shootArchery(e)},{passive:false});
+$("archeryPauseBtn")?.addEventListener("click",()=>{
+  if(!archery.running)return;
+  archery.paused=!archery.paused;
+  $("archeryPauseBtn").textContent=archery.paused?"Resume":"Pause";
+});
+$("archeryRestartBtn")?.addEventListener("click",startArchery);
+
+$("towerCanvas")?.addEventListener("pointerdown",e=>{e.preventDefault();dropTower()},{passive:false});
+$("towerPauseBtn")?.addEventListener("click",()=>{
+  if(!tower.running)return;
+  tower.paused=!tower.paused;
+  $("towerPauseBtn").textContent=tower.paused?"Resume":"Pause";
+});
+$("towerRestartBtn")?.addEventListener("click",startTower);
+
+$("reactionArea")?.addEventListener("click",reactionTap);
+$("reactionRestartBtn")?.addEventListener("click",startReaction);
+
+// Keyboard controls for desktop.
+document.addEventListener("keydown",e=>{
+  if($("gamePage")?.classList.contains("active")){
+    if(["ArrowUp","w","W"].includes(e.key)) setDir("up");
+    if(["ArrowDown","s","S"].includes(e.key)) setDir("down");
+    if(["ArrowLeft","a","A"].includes(e.key)) setDir("left");
+    if(["ArrowRight","d","D"].includes(e.key)) setDir("right");
+  }
+  if($("birdyPage")?.classList.contains("active") && [" ","ArrowUp","w","W"].includes(e.key)){e.preventDefault();flap()}
+  if($("archeryPage")?.classList.contains("active") && e.key===" "){e.preventDefault()}
+  if($("towerPage")?.classList.contains("active") && e.key===" "){e.preventDefault();dropTower()}
+});
+
 
 // Settings/ranks
 document.querySelectorAll("[data-rank-game]").forEach(b=>b.onclick=()=>{activeRankGame=b.dataset.rankGame;document.querySelectorAll("[data-rank-game]").forEach(x=>x.classList.toggle("active",x===b));loadLeaderboard()});$("refreshRanks").onclick=loadLeaderboard;$("difficulty").value=local.settings.difficulty;$("gridToggle").checked=local.settings.grid;$("soundToggle").checked=local.settings.sound;$("difficulty").onchange=e=>{local.settings.difficulty=e.target.value;save()};$("gridToggle").onchange=e=>{local.settings.grid=e.target.checked;save();drawSnake()};$("soundToggle").onchange=e=>{local.settings.sound=e.target.checked;save()};$("resetLocalBtn").onclick=()=>{if(confirm("Reset local high scores, coins, skins and settings?")){localStorage.removeItem("snakeArenaLocal");location.reload()}};
@@ -181,8 +247,12 @@ if(sb)sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(u
   }));
 })();
 
+// In-game back buttons for the original six games.
+["backGameBtn","backBirdyBtn","backArcheryBtn","backTowerBtn","backReactionBtn","backCatapultBtn"].forEach(id=>{
+  const el=$(id);
+  if(el) el.addEventListener("click",e=>{e.preventDefault();show("home")});
 });
 
-// In-game back buttons for the original six games.
-const backHomeMap={backGameBtn:'game',backBirdyBtn:'birdy',backArcheryBtn:'archery',backTowerBtn:'tower',backReactionBtn:'reaction',backCatapultBtn:'catapult'};
-Object.keys(backHomeMap).forEach(id=>{const el=$(id);if(el)el.onclick=()=>show('home')});
+
+});
+
