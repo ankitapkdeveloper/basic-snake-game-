@@ -79,10 +79,11 @@ async function loadLeaderboard(){
   if(!table){list.innerHTML='<div class="rank-row"><span>!</span><span>Unknown leaderboard</span><strong>—</strong></div>';return;}
   $("rankNote").textContent=user?`Your ${labelMap[activeRankGame]||activeRankGame} scores are submitted after each run.`:"Sign in to submit scores to the global leaderboard.";
   $("rankScoreLabel").textContent=activeRankGame==="reaction"?"TIME":"SCORE";
-  const {data,error}=await sb.from(table).select("score,username,avatar_url").order("score",{ascending:activeRankGame==="reaction"}).limit(50);
+  const fruitRanks=activeRankGame==="fruit";
+  const {data,error}=await sb.from(table).select(fruitRanks?"score,player_name,game_mode,combo,created_at":"score,username,avatar_url").order("score",{ascending:activeRankGame==="reaction"}).limit(50);
   if(error){list.innerHTML=`<div class="rank-row"><span>!</span><span>${esc(error.message.includes("does not exist")?"Run the NEW leaderboard SQL migration first.":error.message)}</span><strong>—</strong></div>`;return;}
   if(!data?.length){list.innerHTML='<div class="rank-row"><span>—</span><span>No scores yet</span><strong>—</strong></div>';return;}
-  list.innerHTML=data.map((r,i)=>`<div class="rank-row"><span>${i<3?["🥇","🥈","🥉"][i]:i+1}</span><span class="rank-player">${avatarMarkup(r.avatar_url,"rank-avatar")}${esc(r.username||"Player")}</span><strong class="rank-score">${r.score}${activeRankGame==="reaction"?" ms":""}</strong></div>`).join("");
+  list.innerHTML=data.map((r,i)=>fruitRanks?`<div class="rank-row"><span>${i<3?["🥇","🥈","🥉"][i]:i+1}</span><span class="rank-player"><span class="rank-avatar">🍉</span>${esc(r.player_name||"Player")} <small>${esc(String(r.game_mode||"classic").replace(/(^|_)(\w)/g,(m,a,b)=>b.toUpperCase()))}${Number(r.combo||0)>0?` • Combo ${Number(r.combo)}`:""}</small></span><strong class="rank-score">${r.score}</strong></div>`:`<div class="rank-row"><span>${i<3?["🥇","🥈","🥉"][i]:i+1}</span><span class="rank-player">${avatarMarkup(r.avatar_url,"rank-avatar")}${esc(r.username||"Player")}</span><strong class="rank-score">${r.score}${activeRankGame==="reaction"?" ms":""}</strong></div>`).join("");
 }
 // Catapult King integration event
 window.addEventListener("catapult-game-finished",async e=>{const {score=0}=e.detail||{};local.catapultGames++;local.games++;const earned=Math.max(2,Math.floor(score/80));if(score>local.catapultHighScore)local.catapultHighScore=score;if(!(sb&&user))local.coins+=earned;save();updateUI();if(sb&&user){try{await sb.rpc("submit_catapult_score",{p_score:score});await loadProfile();updateUI()}catch(err){console.warn("Catapult score submit failed",err)}}});
@@ -103,7 +104,7 @@ window.addEventListener("message", async (event)=>{
 
   const score=Math.max(0,Math.min(1000000,Math.floor(Number(d.score)||0)));
   const game=d.game;
-  let rpcName,localGameKey,localHighKey,reward;
+  let rpcName,localGameKey,localHighKey,reward,rpcArgs;
   if(game==="target"){
     const mode=String(d.mode||"classic").toLowerCase();
     const targetModes={
@@ -122,6 +123,9 @@ window.addEventListener("message", async (event)=>{
     rpcName="submit_2048_score";localGameKey="game2048Games";localHighKey="game2048HighScore";reward=Math.floor(score/100);
   }else{
     rpcName="submit_fruit_slice_score";localGameKey="fruitGames";localHighKey="fruitHighScore";reward=Math.floor(score/50);
+    const fruitMode=["classic","time","zen","challenge"].includes(String(d.mode||"").toLowerCase())?String(d.mode).toLowerCase():"classic";
+    const fruitCombo=Math.max(0,Math.min(999,Math.floor(Number(d.combo)||0)));
+    rpcArgs={p_score:score,p_game_mode:fruitMode,p_combo:fruitCombo};
   }
 
   local[localGameKey]=Number(local[localGameKey]||0)+1;
@@ -132,7 +136,7 @@ window.addEventListener("message", async (event)=>{
 
   if(sb&&user){
     try{
-      const {error}=await sb.rpc(rpcName,{p_score:score});
+      const {error}=await sb.rpc(rpcName,rpcArgs||{p_score:score});
       if(error) throw error;
       await loadProfile();updateUI();
       if($("leaderboardPage")?.classList.contains("active")) loadLeaderboard();
