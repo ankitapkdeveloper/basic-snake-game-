@@ -278,6 +278,8 @@ $("gameCanvas")?.addEventListener("touchend",e=>{
   setDir(Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up"));
 },{passive:false});
 $("gameCanvas")?.addEventListener("touchmove",e=>{if(running&&!paused)e.preventDefault()},{passive:false});
+$("gameCanvas")?.addEventListener("pointerdown",e=>{if(e.pointerType!=="touch"||!running||paused)return;snakeTouchStart={x:e.clientX,y:e.clientY};},{passive:true});
+$("gameCanvas")?.addEventListener("pointerup",e=>{if(e.pointerType!=="touch"||!snakeTouchStart||!running||paused)return;const dx=e.clientX-snakeTouchStart.x,dy=e.clientY-snakeTouchStart.y;snakeTouchStart=null;if(Math.max(Math.abs(dx),Math.abs(dy))<28)return;setDir(Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up"));},{passive:true});
 
 $("birdyCanvas")?.addEventListener("pointerdown",e=>{e.preventDefault();flap()},{passive:false});
 $("birdyPauseBtn")?.addEventListener("click",()=>{
